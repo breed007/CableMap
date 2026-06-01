@@ -1,0 +1,41 @@
+{
+  "name": "cablemap",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Self-hosted physical network documentation for home labs and small offices — devices, ports, cable runs, patch panels, racks, and photos.",
+  "license": "MIT",
+  "author": "breed007",
+  "homepage": "https://github.com/breed007/CableMap",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/breed007/CableMap.git"
+  },
+  "bugs": {
+    "url": "https://github.com/breed007/CableMap/issues"
+  },
+  "keywords": [
+    "homelab",
+    "network-documentation",
+    "patch-panel",
+    "cable-management",
+    "self-hosted",
+    "rack",
+    "unifi",
+    "sqlite"
+  ],
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "dev": "concurrently \"npm run dev:server\" \"npm run dev:client\"",
+    "dev:server": "cd server && npm run dev",
+    "dev:client": "cd client && npm run dev",
+    "build": "cd client && npm run build",
+    "start": "cd server && npm start",
+    "db:init": "cd server && node db/init.js",
+    "install:all": "npm install && cd client && npm install && cd ../server && npm install"
+  },
+  "devDependencies": {
+    "concurrently": "^8.2.2"
+  }
+}

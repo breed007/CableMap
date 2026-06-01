@@ -1,0 +1,28 @@
+# Dependencies
+node_modules/
+
+# Environment / secrets
+.env
+*.local
+
+# Build output
+dist/
+client/dist/
+server/public/
+
+# Data directory — keep the folder, ignore DB, session files, and uploaded photos
+data/*.db
+data/*.db-shm
+data/*.db-wal
+data/sessions.db*
+data/uploads/
+
+# Claude Code local settings
+.claude/
+
+# OS / editor cruft
+.DS_Store
+Thumbs.db
+*.swp
+.idea/
+.vscode/
