@@ -10,6 +10,20 @@ CableMap is a self-hosted, single-binary-ish web app (Node + SQLite) with a dark
 
 ---
 
+## Screenshots
+
+| Dashboard | Racks |
+|---|---|
+| [![Dashboard](docs/screenshots/dashboard.png)](docs/screenshots/dashboard.png) | [![Rack elevation](docs/screenshots/racks.png)](docs/screenshots/racks.png) |
+| At-a-glance counts, quick search, and recent activity. | Front-of-rack "U" elevation with per-rack photos. |
+
+| VLAN Manager |
+|---|
+| [![VLAN manager](docs/screenshots/vlans.png)](docs/screenshots/vlans.png) |
+| Manage VLANs and see the connections assigned to each. |
+
+---
+
 ## Why
 
 Home labs grow organically. You add a switch, a NAS, an AP, a UPS — and six months later you can't remember whether port 14 on the core switch goes to the office wall jack or the garage. CableMap is a focused record-keeping tool for exactly that:
