@@ -39,13 +39,53 @@ if (!columnExists('locations', 'rack_units')) {
   console.log('Migrated: locations.rack_units');
 }
 
-// device_templates: custom-template support fields
-for (const col of [['is_custom', 'INTEGER DEFAULT 0'], ['os', 'TEXT'], ['form_factor', 'TEXT'], ['notes', 'TEXT'], ['product_url', 'TEXT'], ['datasheet_url', 'TEXT']]) {
+// device_templates: custom-template support fields + power outlet defaults
+for (const col of [['is_custom', 'INTEGER DEFAULT 0'], ['os', 'TEXT'], ['form_factor', 'TEXT'], ['notes', 'TEXT'], ['product_url', 'TEXT'], ['datasheet_url', 'TEXT'], ['default_outlets', "TEXT NOT NULL DEFAULT '[]'"]]) {
   if (tableExists('device_templates') && !columnExists('device_templates', col[0])) {
     db.exec(`ALTER TABLE device_templates ADD COLUMN ${col[0]} ${col[1]}`);
     console.log(`Migrated: device_templates.${col[0]}`);
   }
 }
+
+// New tables for v0.2.0 (history + power mapping). CREATE IF NOT EXISTS in the
+// schema handles fresh installs; this ensures existing DBs get them too.
+db.exec(`
+  CREATE TABLE IF NOT EXISTS power_outlets (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    device_id INTEGER NOT NULL REFERENCES devices(id) ON DELETE CASCADE,
+    outlet_number INTEGER,
+    label TEXT NOT NULL,
+    outlet_type TEXT NOT NULL DEFAULT 'nema_5_15',
+    max_watts INTEGER,
+    notes TEXT,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+  );
+  CREATE TABLE IF NOT EXISTS power_connections (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    outlet_id INTEGER NOT NULL REFERENCES power_outlets(id) ON DELETE CASCADE,
+    device_id INTEGER NOT NULL REFERENCES devices(id) ON DELETE CASCADE,
+    watts INTEGER,
+    notes TEXT,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+  );
+  CREATE TABLE IF NOT EXISTS history (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    entity_type TEXT NOT NULL,
+    entity_id INTEGER,
+    action TEXT NOT NULL,
+    summary TEXT NOT NULL,
+    meta TEXT,
+    device_a_id INTEGER,
+    device_b_id INTEGER,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+  );
+  CREATE INDEX IF NOT EXISTS idx_power_outlets_device ON power_outlets(device_id);
+  CREATE UNIQUE INDEX IF NOT EXISTS idx_power_connections_outlet ON power_connections(outlet_id);
+  CREATE INDEX IF NOT EXISTS idx_power_connections_device ON power_connections(device_id);
+  CREATE INDEX IF NOT EXISTS idx_history_entity ON history(entity_type, entity_id);
+  CREATE INDEX IF NOT EXISTS idx_history_created ON history(created_at);
+`);
 
 // device_type was originally a CHECK enum; rebuild the table without it so DIY
 // gear types are allowed. Detect the old constraint and migrate in place.
@@ -115,18 +155,25 @@ if (vlanCount === 0) {
 
 // Templates are seeded additively by SKU so new gear appears on existing DBs.
 const insertTemplate = db.prepare(
-  `INSERT INTO device_templates (make, model, sku, device_type, port_count, default_ports, rack_unit_height)
-   VALUES (?, ?, ?, ?, ?, ?, ?)`
+  `INSERT INTO device_templates (make, model, sku, device_type, port_count, default_ports, rack_unit_height, default_outlets)
+   VALUES (?, ?, ?, ?, ?, ?, ?, ?)`
 );
+const updateOutlets = db.prepare('UPDATE device_templates SET default_outlets = ? WHERE sku = ? AND is_custom = 0');
 const skuExists = db.prepare('SELECT 1 FROM device_templates WHERE sku = ?');
-let added = 0;
+let added = 0, outletUpdates = 0;
 for (const t of seedTemplates) {
-  if (skuExists.get(t.sku)) continue;
+  const outletsJson = t.default_outlets || '[]';
+  if (skuExists.get(t.sku)) {
+    // Backfill outlet definitions onto existing built-in UPS/PDU templates.
+    if (outletsJson !== '[]') { updateOutlets.run(outletsJson, t.sku); outletUpdates++; }
+    continue;
+  }
   const ports = JSON.parse(t.default_ports);
-  insertTemplate.run(t.make, t.model, t.sku, t.device_type, ports.length, t.default_ports, t.rack_unit_height || null);
+  insertTemplate.run(t.make, t.model, t.sku, t.device_type, ports.length, t.default_ports, t.rack_unit_height || null, outletsJson);
   added++;
 }
 console.log(added > 0 ? `Seeded ${added} new device templates.` : 'Device templates up to date.');
+if (outletUpdates > 0) console.log(`Backfilled outlets on ${outletUpdates} existing templates.`);
 
 if (!tableExists('attachments')) {
   console.log('Note: attachments table missing — re-run after schema update.');

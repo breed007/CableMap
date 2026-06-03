@@ -9,6 +9,29 @@ export default function Import() {
   const [error, setError] = useState('')
   const fileRef = useRef()
 
+  // ── Full-backup restore ──
+  const [backupFile, setBackupFile] = useState(null)
+  const [restoring, setRestoring] = useState(false)
+  const [restoreResult, setRestoreResult] = useState(null)
+  const [restoreError, setRestoreError] = useState('')
+  const [confirmRestore, setConfirmRestore] = useState(false)
+  const backupRef = useRef()
+
+  const handleRestore = async () => {
+    if (!backupFile) return
+    setRestoring(true); setRestoreError(''); setRestoreResult(null)
+    try {
+      const fd = new FormData()
+      fd.append('file', backupFile)
+      const res = await api.post('/backup/import', fd, { headers: { 'Content-Type': 'multipart/form-data' } })
+      setRestoreResult(res.data)
+      setBackupFile(null); setConfirmRestore(false)
+      if (backupRef.current) backupRef.current.value = ''
+    } catch (err) {
+      setRestoreError(err.response?.data?.error || 'Restore failed')
+    } finally { setRestoring(false) }
+  }
+
   const handleFile = (e) => {
     const f = e.target.files[0]
     if (!f) return
@@ -54,9 +77,62 @@ export default function Import() {
   return (
     <div className="p-6 max-w-3xl">
       <div className="mb-6">
-        <h1 className="text-xl font-semibold text-white mb-1">Import Connections</h1>
-        <p className="text-sm text-gray-500">Bulk-import connections from a CSV file.</p>
+        <h1 className="text-xl font-semibold text-white mb-1">Import &amp; Restore</h1>
+        <p className="text-sm text-gray-500">Restore a full backup, or bulk-import connections from CSV.</p>
       </div>
+
+      {/* Full backup restore */}
+      <div className="bg-[#141414] border border-[#EF4444]/30 rounded-lg p-5 mb-6">
+        <div className="text-sm font-semibold text-white mb-1">Restore from Backup</div>
+        <div className="text-xs text-gray-500 mb-3">
+          Upload a CableMap backup ZIP (from Export). This <strong className="text-amber-300">replaces all current data</strong> — devices, connections, racks, VLANs, power mapping, history, custom templates, and photos.
+        </div>
+
+        <div
+          className="border-2 border-dashed border-[#374151] rounded-lg p-5 text-center hover:border-[#EF4444]/50 transition-colors cursor-pointer"
+          onClick={() => backupRef.current?.click()}
+          onDragOver={e => e.preventDefault()}
+          onDrop={e => { e.preventDefault(); const f = e.dataTransfer.files[0]; if (f) { setBackupFile(f); setRestoreResult(null); setRestoreError(''); setConfirmRestore(false) } }}
+        >
+          {backupFile ? (
+            <div className="text-sm text-white">{backupFile.name} <span className="text-gray-500">({(backupFile.size / 1024 / 1024).toFixed(1)} MB)</span></div>
+          ) : (
+            <div className="text-sm text-gray-400">Drop a <span className="font-mono">.zip</span> backup here, or click to browse</div>
+          )}
+          <input ref={backupRef} type="file" accept=".zip,application/zip" className="hidden"
+            onChange={e => { const f = e.target.files[0]; if (f) { setBackupFile(f); setRestoreResult(null); setRestoreError(''); setConfirmRestore(false) } }}/>
+        </div>
+
+        {backupFile && !restoreResult && (
+          <div className="mt-3">
+            {!confirmRestore ? (
+              <button onClick={() => setConfirmRestore(true)}
+                className="bg-[#EF4444] hover:bg-red-600 text-white text-sm font-medium px-4 py-2 rounded-lg transition-colors">
+                Restore (replaces all data)…
+              </button>
+            ) : (
+              <div className="flex items-center gap-3">
+                <span className="text-xs text-amber-300">This will erase and replace everything. Are you sure?</span>
+                <button onClick={handleRestore} disabled={restoring}
+                  className="bg-[#EF4444] hover:bg-red-600 disabled:opacity-50 text-white text-sm font-medium px-4 py-2 rounded-lg transition-colors">
+                  {restoring ? 'Restoring…' : 'Yes, restore'}
+                </button>
+                <button onClick={() => setConfirmRestore(false)} className="text-sm text-gray-400 hover:text-white">Cancel</button>
+              </div>
+            )}
+          </div>
+        )}
+
+        {restoreError && <div className="mt-3 text-sm text-red-400 bg-red-400/10 border border-red-400/20 rounded-lg px-3 py-2">{restoreError}</div>}
+        {restoreResult && (
+          <div className="mt-3 text-sm text-green-400 bg-green-400/10 border border-green-400/20 rounded-lg px-3 py-2">
+            Restore complete — {Object.entries(restoreResult.restored || {}).reduce((s, [, v]) => s + v, 0)} records and {restoreResult.files_restored} file{restoreResult.files_restored !== 1 ? 's' : ''} restored.
+            {restoreResult.warning ? <div className="text-amber-300 mt-1">{restoreResult.warning}</div> : null}
+          </div>
+        )}
+      </div>
+
+      <div className="text-sm font-semibold text-white mb-2">Import Connections (CSV)</div>
 
       {/* Template download */}
       <div className="bg-[#141414] border border-[#1f2937] rounded-lg p-4 mb-5 flex items-center justify-between">

@@ -3,6 +3,7 @@ const router = express.Router();
 const path = require('path');
 const fs = require('fs');
 const { getDb } = require('../db/connection');
+const { logHistory } = require('../utils/history');
 
 const DATA_DIR = process.env.DATA_DIR || path.resolve(__dirname, '../../data');
 const UPLOAD_DIR = path.resolve(DATA_DIR, 'uploads');
@@ -41,6 +42,7 @@ router.post('/', (req, res) => {
     `INSERT INTO devices (name, device_type, make, model, os, form_factor, location_id, rack_unit_start, rack_unit_height, management_ip, notes, canvas_x, canvas_y)
      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
   ).run(name, device_type, make || null, model || null, os || null, form_factor || null, location_id || null, rack_unit_start || null, rack_unit_height || null, management_ip || null, notes || null, canvas_x || 0, canvas_y || 0);
+  logHistory(db, { entity_type: 'device', entity_id: result.lastInsertRowid, action: 'created', summary: `Added device ${name} (${device_type})`, device_a_id: result.lastInsertRowid });
   res.status(201).json(getDeviceById(db, result.lastInsertRowid));
 });
 
@@ -53,7 +55,7 @@ router.get('/:id', (req, res) => {
 
 router.put('/:id', (req, res) => {
   const db = getDb();
-  const device = db.prepare('SELECT id FROM devices WHERE id = ?').get(req.params.id);
+  const device = db.prepare('SELECT * FROM devices WHERE id = ?').get(req.params.id);
   if (!device) return res.status(404).json({ error: 'Not found' });
   const { name, device_type, make, model, os, form_factor, location_id, rack_unit_start, rack_unit_height, management_ip, notes } = req.body;
   if (device_type !== undefined && !String(device_type).trim()) return res.status(400).json({ error: 'device_type cannot be empty' });
@@ -61,6 +63,14 @@ router.put('/:id', (req, res) => {
     `UPDATE devices SET name=?, device_type=?, make=?, model=?, os=?, form_factor=?, location_id=?, rack_unit_start=?, rack_unit_height=?, management_ip=?, notes=?, updated_at=CURRENT_TIMESTAMP
      WHERE id=?`
   ).run(name, device_type, make || null, model || null, os || null, form_factor || null, location_id || null, rack_unit_start || null, rack_unit_height || null, management_ip || null, notes || null, req.params.id);
+  // Record notable field changes
+  const changes = [];
+  if (name !== undefined && name !== device.name) changes.push(`renamed to ${name}`);
+  if (os !== undefined && (os || null) !== device.os) changes.push(`OS → ${os || '—'}`);
+  if (location_id !== undefined && (Number(location_id) || null) !== device.location_id) changes.push('moved location');
+  const rs = rack_unit_start === '' ? null : (rack_unit_start ?? device.rack_unit_start);
+  if (rack_unit_start !== undefined && (rs ? Number(rs) : null) !== device.rack_unit_start) changes.push('rack position changed');
+  logHistory(db, { entity_type: 'device', entity_id: Number(req.params.id), action: 'updated', summary: `Edited ${name || device.name}${changes.length ? ': ' + changes.join(', ') : ''}`, device_a_id: Number(req.params.id) });
   res.json(getDeviceById(db, req.params.id));
 });
 
@@ -74,13 +84,14 @@ router.put('/:id/position', (req, res) => {
 
 router.delete('/:id', (req, res) => {
   const db = getDb();
-  const device = db.prepare('SELECT id FROM devices WHERE id = ?').get(req.params.id);
+  const device = db.prepare('SELECT * FROM devices WHERE id = ?').get(req.params.id);
   if (!device) return res.status(404).json({ error: 'Not found' });
   // Clean up device photos (polymorphic, no FK cascade)
   const photos = db.prepare(`SELECT filename FROM attachments WHERE entity_type='device' AND entity_id=?`).all(req.params.id);
   db.prepare(`DELETE FROM attachments WHERE entity_type='device' AND entity_id=?`).run(req.params.id);
   for (const p of photos) fs.unlink(path.join(UPLOAD_DIR, p.filename), () => {});
   db.prepare('DELETE FROM devices WHERE id = ?').run(req.params.id);
+  logHistory(db, { entity_type: 'device', entity_id: Number(req.params.id), action: 'deleted', summary: `Deleted device ${device.name} (${device.device_type})` });
   res.json({ ok: true });
 });
 
@@ -140,6 +151,29 @@ function getDeviceById(db, id) {
       ) THEN 1 ELSE 0 END as is_connected
     FROM ports p WHERE p.device_id = ? ORDER BY p.panel_side, p.port_number, p.label
   `).all(id);
+
+  // Power outlets this device provides (UPS/PDU), with what's plugged in
+  device.outlets = db.prepare(`
+    SELECT o.*,
+      pc.id as power_connection_id, pc.watts as connected_watts,
+      cd.id as connected_device_id, cd.name as connected_device_name, cd.device_type as connected_device_type
+    FROM power_outlets o
+    LEFT JOIN power_connections pc ON pc.outlet_id = o.id
+    LEFT JOIN devices cd ON pc.device_id = cd.id
+    WHERE o.device_id = ? ORDER BY o.outlet_number, o.id
+  `).all(id);
+
+  // Power feeds: outlets that power THIS device (its PSUs)
+  device.power_feeds = db.prepare(`
+    SELECT pc.id as power_connection_id, pc.watts,
+      o.id as outlet_id, o.label as outlet_label, o.outlet_type,
+      sd.id as source_device_id, sd.name as source_device_name, sd.device_type as source_device_type
+    FROM power_connections pc
+    JOIN power_outlets o ON pc.outlet_id = o.id
+    JOIN devices sd ON o.device_id = sd.id
+    WHERE pc.device_id = ?
+  `).all(id);
+
   return device;
 }
 

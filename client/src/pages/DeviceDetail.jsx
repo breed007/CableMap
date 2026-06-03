@@ -5,6 +5,8 @@ import Modal from '../components/Modal'
 import DeviceTypeIcon from '../components/DeviceTypeIcon'
 import PhotoUploader from '../components/PhotoUploader'
 import DocumentUploader from '../components/DocumentUploader'
+import PowerSection from '../components/PowerSection'
+import DeviceHistory from '../components/DeviceHistory'
 import { DEVICE_TYPE_LABELS, PORT_TYPE_LABELS, SPEED_LABELS, CABLE_COLORS, STATUS_COLORS, PASSIVE_DEVICE_TYPES, FORM_FACTORS, FORM_FACTOR_LABELS } from '../utils/cableColors'
 
 const DEVICE_TYPES = ['switch','patch_panel','wall_plate','router','nas','access_point','server','firewall','modem','media_converter','ups','pdu','shelf','blank','other']
@@ -27,9 +29,10 @@ export default function DeviceDetail() {
   const [traceLoading, setTraceLoading] = useState(false)
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
+  const [reloadKey, setReloadKey] = useState(0)
 
   const load = () => {
-    api.get(`/devices/${id}`).then(r => { setDevice(r.data); setForm(r.data) })
+    api.get(`/devices/${id}`).then(r => { setDevice(r.data); setForm(r.data); setReloadKey(k => k + 1) })
   }
 
   useEffect(() => {
@@ -176,10 +179,16 @@ export default function DeviceDetail() {
         <PhotoUploader entityType="device" entityId={device.id} title="Device Photos"/>
       </div>
 
+      {/* Power mapping — outlets (UPS/PDU) and what feeds this device */}
+      <PowerSection device={device} onChange={load}/>
+
       {/* Documents — spec sheets, Visio stencils */}
       <div className="bg-[#141414] border border-[#1f2937] rounded-lg mb-4 p-4">
         <DocumentUploader entityType="device" entityId={device.id} title="Spec Sheets & Documents"/>
       </div>
+
+      {/* Change history for this device */}
+      <DeviceHistory deviceId={device.id} refreshKey={reloadKey}/>
 
       {/* Port Detail Side Panel */}
       {selectedPort && portDetail && (

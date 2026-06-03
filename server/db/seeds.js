@@ -13,6 +13,13 @@ const seedVlans = [
   { vlan_id: 30, name: 'Guest', description: 'Guest network', color: '#22C55E' },
 ];
 
+// Helper: build a default_outlets JSON string for UPS/PDU templates.
+// outlet_type: nema_5_15 | nema_5_20 | c13 | c19 | other
+const outlets = (count, type = 'nema_5_15', maxWatts = null) =>
+  JSON.stringify(Array.from({ length: count }, (_, i) => ({
+    label: `Outlet ${i + 1}`, outlet_type: type, max_watts: maxWatts,
+  })));
+
 // UniFi device templates
 const seedTemplates = [
   // Gateways
@@ -559,6 +566,7 @@ const seedTemplates = [
     default_ports: JSON.stringify([
       { label: 'Network/Mgmt', port_number: 1, port_type: 'rj45', speed: '1g', is_uplink: 0 },
     ]),
+    default_outlets: outlets(8, 'c13'),
   },
   {
     make: 'Generic', model: 'Rackmount UPS 2U', sku: 'GEN-UPS-2U', device_type: 'ups',
@@ -566,11 +574,13 @@ const seedTemplates = [
     default_ports: JSON.stringify([
       { label: 'Network/Mgmt', port_number: 1, port_type: 'rj45', speed: '1g', is_uplink: 0 },
     ]),
+    default_outlets: outlets(8, 'c13'),
   },
   {
     make: 'Generic', model: 'Rackmount PDU', sku: 'GEN-PDU-1U', device_type: 'pdu',
     rack_unit_height: 1,
     default_ports: JSON.stringify([]),
+    default_outlets: outlets(8, 'c13'),
   },
 
   // ── Passive rack occupants (no ports) ────────────────────────────────────────
@@ -2165,88 +2175,216 @@ const seedTemplates = [
     ]),
   },
 
-  // ── APC UPS ─────────────────────────────────────────────────────────────────
+  // ── APC UPS (rackmount) ─────────────────────────────────────────────────────
   {
-    make: 'APC', model: 'Smart-UPS SMT750RM2U', sku: 'APC-SMT750RM2U', device_type: 'ups', rack_unit_height: 2,
+    make: 'APC', model: 'Smart-UPS SMT750RM2U (750VA)', sku: 'APC-SMT750RM2U', device_type: 'ups', rack_unit_height: 2,
     default_ports: JSON.stringify([{ label: 'Network Mgmt (AP9631)', port_number: 1, port_type: 'rj45', speed: '1g', is_uplink: 0 }]),
+    default_outlets: outlets(6, 'nema_5_15'),
   },
   {
-    make: 'APC', model: 'Smart-UPS SMT1500RM2U', sku: 'APC-SMT1500RM2U', device_type: 'ups', rack_unit_height: 2,
+    make: 'APC', model: 'Smart-UPS SMT1000RM2U (1000VA)', sku: 'APC-SMT1000RM2U', device_type: 'ups', rack_unit_height: 2,
     default_ports: JSON.stringify([{ label: 'Network Mgmt (AP9631)', port_number: 1, port_type: 'rj45', speed: '1g', is_uplink: 0 }]),
+    default_outlets: outlets(6, 'nema_5_15'),
   },
   {
-    make: 'APC', model: 'Smart-UPS SMT2200RM2U', sku: 'APC-SMT2200RM2U', device_type: 'ups', rack_unit_height: 2,
+    make: 'APC', model: 'Smart-UPS SMT1500RM2U (1500VA)', sku: 'APC-SMT1500RM2U', device_type: 'ups', rack_unit_height: 2,
     default_ports: JSON.stringify([{ label: 'Network Mgmt (AP9631)', port_number: 1, port_type: 'rj45', speed: '1g', is_uplink: 0 }]),
+    default_outlets: outlets(8, 'nema_5_15'),
   },
   {
-    make: 'APC', model: 'Smart-UPS SMX1500RM2U', sku: 'APC-SMX1500RM2U', device_type: 'ups', rack_unit_height: 2,
+    make: 'APC', model: 'Smart-UPS SMT2200RM2U (2200VA)', sku: 'APC-SMT2200RM2U', device_type: 'ups', rack_unit_height: 2,
     default_ports: JSON.stringify([{ label: 'Network Mgmt (AP9631)', port_number: 1, port_type: 'rj45', speed: '1g', is_uplink: 0 }]),
+    default_outlets: outlets(8, 'nema_5_15'),
   },
   {
-    make: 'APC', model: 'Back-UPS Pro BR1500MS (Desktop)', sku: 'APC-BR1500MS', device_type: 'ups', rack_unit_height: null,
+    make: 'APC', model: 'Smart-UPS SMX1500RM2U (1440VA)', sku: 'APC-SMX1500RM2U', device_type: 'ups', rack_unit_height: 2,
+    default_ports: JSON.stringify([{ label: 'Network Mgmt (AP9631)', port_number: 1, port_type: 'rj45', speed: '1g', is_uplink: 0 }]),
+    default_outlets: outlets(8, 'nema_5_15'),
+  },
+  // ── APC UPS (tower / desktop) ───────────────────────────────────────────────
+  {
+    make: 'APC', model: 'Smart-UPS SMT750 (Tower, 750VA)', sku: 'APC-SMT750', device_type: 'ups', rack_unit_height: null,
+    default_ports: JSON.stringify([{ label: 'Network Mgmt (AP9631)', port_number: 1, port_type: 'rj45', speed: '1g', is_uplink: 0 }]),
+    default_outlets: outlets(6, 'nema_5_15'),
+  },
+  {
+    make: 'APC', model: 'Smart-UPS SMT1500 (Tower, 1500VA)', sku: 'APC-SMT1500', device_type: 'ups', rack_unit_height: null,
+    default_ports: JSON.stringify([{ label: 'Network Mgmt (AP9631)', port_number: 1, port_type: 'rj45', speed: '1g', is_uplink: 0 }]),
+    default_outlets: outlets(8, 'nema_5_15'),
+  },
+  {
+    make: 'APC', model: 'Smart-UPS C SMC1500 (Tower, 1500VA)', sku: 'APC-SMC1500', device_type: 'ups', rack_unit_height: null,
+    default_ports: JSON.stringify([{ label: 'Network Mgmt (slot)', port_number: 1, port_type: 'rj45', speed: '1g', is_uplink: 0 }]),
+    default_outlets: outlets(8, 'nema_5_15'),
+  },
+  {
+    make: 'APC', model: 'Back-UPS Pro BR1500MS (Tower, 1500VA)', sku: 'APC-BR1500MS', device_type: 'ups', rack_unit_height: null,
     default_ports: JSON.stringify([]),
-  },
-
-  // ── CyberPower UPS ──────────────────────────────────────────────────────────
-  {
-    make: 'CyberPower', model: 'OR700LCDRM1U', sku: 'CP-OR700LCDRM1U', device_type: 'ups', rack_unit_height: 1,
-    default_ports: JSON.stringify([{ label: 'Network Mgmt (RMCARD)', port_number: 1, port_type: 'rj45', speed: '1g', is_uplink: 0 }]),
+    default_outlets: outlets(10, 'nema_5_15'),
   },
   {
-    make: 'CyberPower', model: 'OR1500LCDRM1U', sku: 'CP-OR1500LCDRM1U', device_type: 'ups', rack_unit_height: 1,
-    default_ports: JSON.stringify([{ label: 'Network Mgmt (RMCARD)', port_number: 1, port_type: 'rj45', speed: '1g', is_uplink: 0 }]),
-  },
-  {
-    make: 'CyberPower', model: 'PR1500RT2U', sku: 'CP-PR1500RT2U', device_type: 'ups', rack_unit_height: 2,
-    default_ports: JSON.stringify([{ label: 'Network Mgmt (RMCARD)', port_number: 1, port_type: 'rj45', speed: '1g', is_uplink: 0 }]),
-  },
-  {
-    make: 'CyberPower', model: 'PR2200LCDRT2U', sku: 'CP-PR2200LCDRT2U', device_type: 'ups', rack_unit_height: 2,
-    default_ports: JSON.stringify([{ label: 'Network Mgmt (RMCARD)', port_number: 1, port_type: 'rj45', speed: '1g', is_uplink: 0 }]),
-  },
-  {
-    make: 'CyberPower', model: 'CP1500PFCLCD (Desktop)', sku: 'CP-CP1500PFCLCD', device_type: 'ups', rack_unit_height: null,
+    make: 'APC', model: 'Back-UPS BX1500M (Tower, 1500VA)', sku: 'APC-BX1500M', device_type: 'ups', rack_unit_height: null,
     default_ports: JSON.stringify([]),
+    default_outlets: outlets(10, 'nema_5_15'),
   },
 
-  // ── Eaton UPS ───────────────────────────────────────────────────────────────
+  // ── CyberPower UPS (rackmount) ──────────────────────────────────────────────
   {
-    make: 'Eaton', model: '5P 1550R (1U)', sku: 'EATON-5P1550R', device_type: 'ups', rack_unit_height: 1,
-    default_ports: JSON.stringify([{ label: 'Network-M2', port_number: 1, port_type: 'rj45', speed: '1g', is_uplink: 0 }]),
+    make: 'CyberPower', model: 'OR700LCDRM1U (700VA)', sku: 'CP-OR700LCDRM1U', device_type: 'ups', rack_unit_height: 1,
+    default_ports: JSON.stringify([{ label: 'Network Mgmt (RMCARD)', port_number: 1, port_type: 'rj45', speed: '1g', is_uplink: 0 }]),
+    default_outlets: outlets(6, 'nema_5_15'),
   },
   {
-    make: 'Eaton', model: '5PX 1500RT (2U)', sku: 'EATON-5PX1500RT', device_type: 'ups', rack_unit_height: 2,
-    default_ports: JSON.stringify([{ label: 'Network-M2', port_number: 1, port_type: 'rj45', speed: '1g', is_uplink: 0 }]),
+    make: 'CyberPower', model: 'OR1000LCDRM1U (1000VA)', sku: 'CP-OR1000LCDRM1U', device_type: 'ups', rack_unit_height: 1,
+    default_ports: JSON.stringify([{ label: 'Network Mgmt (RMCARD)', port_number: 1, port_type: 'rj45', speed: '1g', is_uplink: 0 }]),
+    default_outlets: outlets(6, 'nema_5_15'),
   },
   {
-    make: 'Eaton', model: '5PX 2200RT (2U)', sku: 'EATON-5PX2200RT', device_type: 'ups', rack_unit_height: 2,
-    default_ports: JSON.stringify([{ label: 'Network-M2', port_number: 1, port_type: 'rj45', speed: '1g', is_uplink: 0 }]),
+    make: 'CyberPower', model: 'OR1500LCDRM1U (1500VA)', sku: 'CP-OR1500LCDRM1U', device_type: 'ups', rack_unit_height: 1,
+    default_ports: JSON.stringify([{ label: 'Network Mgmt (RMCARD)', port_number: 1, port_type: 'rj45', speed: '1g', is_uplink: 0 }]),
+    default_outlets: outlets(8, 'nema_5_15'),
   },
   {
-    make: 'Eaton', model: '9PX 1500RT (2U)', sku: 'EATON-9PX1500RT', device_type: 'ups', rack_unit_height: 2,
-    default_ports: JSON.stringify([{ label: 'Network-M2', port_number: 1, port_type: 'rj45', speed: '1g', is_uplink: 0 }]),
+    make: 'CyberPower', model: 'PR1500RT2U (1500VA)', sku: 'CP-PR1500RT2U', device_type: 'ups', rack_unit_height: 2,
+    default_ports: JSON.stringify([{ label: 'Network Mgmt (RMCARD)', port_number: 1, port_type: 'rj45', speed: '1g', is_uplink: 0 }]),
+    default_outlets: outlets(8, 'nema_5_15'),
   },
   {
-    make: 'Eaton', model: '9PX 3000RT (2U)', sku: 'EATON-9PX3000RT', device_type: 'ups', rack_unit_height: 2,
-    default_ports: JSON.stringify([{ label: 'Network-M2', port_number: 1, port_type: 'rj45', speed: '1g', is_uplink: 0 }]),
+    make: 'CyberPower', model: 'PR2200LCDRT2U (2200VA)', sku: 'CP-PR2200LCDRT2U', device_type: 'ups', rack_unit_height: 2,
+    default_ports: JSON.stringify([{ label: 'Network Mgmt (RMCARD)', port_number: 1, port_type: 'rj45', speed: '1g', is_uplink: 0 }]),
+    default_outlets: outlets(8, 'nema_5_15'),
+  },
+  // ── CyberPower UPS (tower / desktop) ────────────────────────────────────────
+  {
+    make: 'CyberPower', model: 'CP1500PFCLCD (Tower, 1500VA)', sku: 'CP-CP1500PFCLCD', device_type: 'ups', rack_unit_height: null,
+    default_ports: JSON.stringify([]),
+    default_outlets: outlets(12, 'nema_5_15'),
+  },
+  {
+    make: 'CyberPower', model: 'CP1350PFCLCD (Tower, 1350VA)', sku: 'CP-CP1350PFCLCD', device_type: 'ups', rack_unit_height: null,
+    default_ports: JSON.stringify([]),
+    default_outlets: outlets(10, 'nema_5_15'),
   },
 
-  // ── Tripp Lite / Vertiv UPS ─────────────────────────────────────────────────
+  // ── Eaton UPS (rackmount, IEC C13 outlets) ──────────────────────────────────
   {
-    make: 'Tripp Lite', model: 'SmartPro SMART1500RMXL2U', sku: 'TRIPP-SMART1500RMXL2U', device_type: 'ups', rack_unit_height: 2,
+    make: 'Eaton', model: '5P 1550R (1U, 1550VA)', sku: 'EATON-5P1550R', device_type: 'ups', rack_unit_height: 1,
+    default_ports: JSON.stringify([{ label: 'Network-M2', port_number: 1, port_type: 'rj45', speed: '1g', is_uplink: 0 }]),
+    default_outlets: outlets(8, 'c13'),
+  },
+  {
+    make: 'Eaton', model: '5PX 1500RT (2U, 1500VA)', sku: 'EATON-5PX1500RT', device_type: 'ups', rack_unit_height: 2,
+    default_ports: JSON.stringify([{ label: 'Network-M2', port_number: 1, port_type: 'rj45', speed: '1g', is_uplink: 0 }]),
+    default_outlets: outlets(8, 'c13'),
+  },
+  {
+    make: 'Eaton', model: '5PX 2200RT (2U, 2200VA)', sku: 'EATON-5PX2200RT', device_type: 'ups', rack_unit_height: 2,
+    default_ports: JSON.stringify([{ label: 'Network-M2', port_number: 1, port_type: 'rj45', speed: '1g', is_uplink: 0 }]),
+    default_outlets: JSON.stringify([
+      ...Array.from({ length: 8 }, (_, i) => ({ label: `Outlet ${i + 1}`, outlet_type: 'c13', max_watts: null })),
+      { label: 'Outlet 9 (C19)', outlet_type: 'c19', max_watts: null },
+    ]),
+  },
+  {
+    make: 'Eaton', model: '9PX 1500RT (2U, 1500VA)', sku: 'EATON-9PX1500RT', device_type: 'ups', rack_unit_height: 2,
+    default_ports: JSON.stringify([{ label: 'Network-M2', port_number: 1, port_type: 'rj45', speed: '1g', is_uplink: 0 }]),
+    default_outlets: outlets(8, 'c13'),
+  },
+  {
+    make: 'Eaton', model: '9PX 3000RT (2U, 3000VA)', sku: 'EATON-9PX3000RT', device_type: 'ups', rack_unit_height: 2,
+    default_ports: JSON.stringify([{ label: 'Network-M2', port_number: 1, port_type: 'rj45', speed: '1g', is_uplink: 0 }]),
+    default_outlets: JSON.stringify([
+      ...Array.from({ length: 8 }, (_, i) => ({ label: `Outlet ${i + 1}`, outlet_type: 'c13', max_watts: null })),
+      { label: 'Outlet 9 (C19)', outlet_type: 'c19', max_watts: null },
+      { label: 'Outlet 10 (C19)', outlet_type: 'c19', max_watts: null },
+    ]),
+  },
+  // ── Eaton UPS (tower / desktop) ─────────────────────────────────────────────
+  {
+    make: 'Eaton', model: '5S 1500 (Tower, 1500VA)', sku: 'EATON-5S1500', device_type: 'ups', rack_unit_height: null,
+    default_ports: JSON.stringify([]),
+    default_outlets: outlets(10, 'nema_5_15'),
+  },
+  {
+    make: 'Eaton', model: '5SC 1500 (Tower, 1500VA)', sku: 'EATON-5SC1500', device_type: 'ups', rack_unit_height: null,
+    default_ports: JSON.stringify([{ label: 'Network slot', port_number: 1, port_type: 'rj45', speed: '1g', is_uplink: 0 }]),
+    default_outlets: outlets(8, 'nema_5_15'),
+  },
+
+  // ── Tripp Lite UPS ──────────────────────────────────────────────────────────
+  {
+    make: 'Tripp Lite', model: 'SmartPro SMART1000RM1U (1U, 1000VA)', sku: 'TRIPP-SMART1000RM1U', device_type: 'ups', rack_unit_height: 1,
     default_ports: JSON.stringify([{ label: 'Network Mgmt (WEBCARDLX)', port_number: 1, port_type: 'rj45', speed: '1g', is_uplink: 0 }]),
+    default_outlets: outlets(6, 'nema_5_15'),
   },
   {
-    make: 'Tripp Lite', model: 'SmartPro SMART1500LCD (Desktop)', sku: 'TRIPP-SMART1500LCD', device_type: 'ups', rack_unit_height: null,
+    make: 'Tripp Lite', model: 'SmartPro SMART1500RMXL2U (2U, 1500VA)', sku: 'TRIPP-SMART1500RMXL2U', device_type: 'ups', rack_unit_height: 2,
+    default_ports: JSON.stringify([{ label: 'Network Mgmt (WEBCARDLX)', port_number: 1, port_type: 'rj45', speed: '1g', is_uplink: 0 }]),
+    default_outlets: outlets(6, 'nema_5_15'),
+  },
+  {
+    make: 'Tripp Lite', model: 'SmartPro SMART1500LCD (Tower, 1500VA)', sku: 'TRIPP-SMART1500LCD', device_type: 'ups', rack_unit_height: null,
     default_ports: JSON.stringify([]),
+    default_outlets: outlets(8, 'nema_5_15'),
   },
   {
-    make: 'Vertiv', model: 'Liebert GXT5 1500RT120 (2U)', sku: 'VERTIV-GXT5-1500RT120', device_type: 'ups', rack_unit_height: 2,
+    make: 'Tripp Lite', model: 'OmniVS OMNI1500LCDT (Tower, 1500VA)', sku: 'TRIPP-OMNI1500LCDT', device_type: 'ups', rack_unit_height: null,
+    default_ports: JSON.stringify([]),
+    default_outlets: outlets(8, 'nema_5_15'),
+  },
+
+  // ── Vertiv (Liebert) UPS ────────────────────────────────────────────────────
+  {
+    make: 'Vertiv', model: 'Liebert GXT5 1500RT120 (2U, 1500VA)', sku: 'VERTIV-GXT5-1500RT120', device_type: 'ups', rack_unit_height: 2,
     default_ports: JSON.stringify([{ label: 'Network (RDU101)', port_number: 1, port_type: 'rj45', speed: '1g', is_uplink: 0 }]),
+    default_outlets: outlets(6, 'nema_5_15'),
   },
   {
-    make: 'Vertiv', model: 'Liebert GXT5 3000RT120 (2U)', sku: 'VERTIV-GXT5-3000RT120', device_type: 'ups', rack_unit_height: 2,
+    make: 'Vertiv', model: 'Liebert GXT5 3000RT120 (2U, 3000VA)', sku: 'VERTIV-GXT5-3000RT120', device_type: 'ups', rack_unit_height: 2,
     default_ports: JSON.stringify([{ label: 'Network (RDU101)', port_number: 1, port_type: 'rj45', speed: '1g', is_uplink: 0 }]),
+    default_outlets: outlets(6, 'nema_5_15'),
+  },
+  {
+    make: 'Vertiv', model: 'Liebert PSI5 1500RT120 (2U, 1500VA)', sku: 'VERTIV-PSI5-1500RT120', device_type: 'ups', rack_unit_height: 2,
+    default_ports: JSON.stringify([{ label: 'Network slot', port_number: 1, port_type: 'rj45', speed: '1g', is_uplink: 0 }]),
+    default_outlets: outlets(8, 'nema_5_15'),
+  },
+
+  // ── Rack PDUs (basic / metered) ─────────────────────────────────────────────
+  {
+    make: 'APC', model: 'Rack PDU Basic AP9559 (1U)', sku: 'APC-AP9559', device_type: 'pdu', rack_unit_height: 1,
+    default_ports: JSON.stringify([]),
+    default_outlets: outlets(12, 'nema_5_15'),
+  },
+  {
+    make: 'APC', model: 'Rack PDU Metered AP8861 (0U/2U)', sku: 'APC-AP8861', device_type: 'pdu', rack_unit_height: 2,
+    default_ports: JSON.stringify([{ label: 'Network', port_number: 1, port_type: 'rj45', speed: '1g', is_uplink: 0 }]),
+    default_outlets: outlets(24, 'c13'),
+  },
+  {
+    make: 'CyberPower', model: 'PDU15M10AT Metered (1U)', sku: 'CP-PDU15M10AT', device_type: 'pdu', rack_unit_height: 1,
+    default_ports: JSON.stringify([{ label: 'Network', port_number: 1, port_type: 'rj45', speed: '1g', is_uplink: 0 }]),
+    default_outlets: outlets(10, 'nema_5_15'),
+  },
+  {
+    make: 'CyberPower', model: 'PDU15B2F12R Basic (1U)', sku: 'CP-PDU15B2F12R', device_type: 'pdu', rack_unit_height: 1,
+    default_ports: JSON.stringify([]),
+    default_outlets: outlets(14, 'nema_5_15'),
+  },
+  {
+    make: 'Tripp Lite', model: 'PDUMH15 Metered (1U)', sku: 'TRIPP-PDUMH15', device_type: 'pdu', rack_unit_height: 1,
+    default_ports: JSON.stringify([{ label: 'Network', port_number: 1, port_type: 'rj45', speed: '1g', is_uplink: 0 }]),
+    default_outlets: outlets(14, 'nema_5_15'),
+  },
+  {
+    make: 'Eaton', model: 'ePDU EMAB03 Basic (1U)', sku: 'EATON-EMAB03', device_type: 'pdu', rack_unit_height: 1,
+    default_ports: JSON.stringify([]),
+    default_outlets: outlets(12, 'c13'),
+  },
+  {
+    make: 'Generic', model: 'Vertical PDU 0U (24× C13)', sku: 'GEN-PDU-0U-24', device_type: 'pdu', rack_unit_height: null,
+    default_ports: JSON.stringify([]),
+    default_outlets: outlets(24, 'c13'),
   },
 ];
 

@@ -3,6 +3,7 @@ const router = express.Router();
 const path = require('path');
 const fs = require('fs');
 const { getDb } = require('../db/connection');
+const { logHistory } = require('../utils/history');
 
 const DATA_DIR = process.env.DATA_DIR || path.resolve(__dirname, '../../data');
 const UPLOAD_DIR = path.resolve(DATA_DIR, 'uploads');
@@ -77,7 +78,13 @@ router.post('/', (req, res) => {
      VALUES (?, ?, ?, ?, ?, ?, ?, ?)`
   ).run(port_a_id, port_b_id, cable_type || 'cat6', cable_color || null, cable_length_ft || null, vlan_id || null, status || 'active', notes || null);
 
-  res.status(201).json(db.prepare(CONNECTION_SELECT + ' WHERE c.id = ?').get(result.lastInsertRowid));
+  const created = db.prepare(CONNECTION_SELECT + ' WHERE c.id = ?').get(result.lastInsertRowid);
+  logHistory(db, {
+    entity_type: 'connection', entity_id: created.id, action: 'created',
+    summary: `Connected ${created.device_a_name}/${created.port_a_label} ↔ ${created.device_b_name}/${created.port_b_label} (${created.cable_type})`,
+    device_a_id: created.device_a_id, device_b_id: created.device_b_id,
+  });
+  res.status(201).json(created);
 });
 
 router.get('/:id', (req, res) => {
@@ -112,17 +119,29 @@ router.put('/:id', (req, res) => {
      WHERE id=?`
   ).run(newPortA, newPortB, cable_type || existing.cable_type, cable_color !== undefined ? cable_color : existing.cable_color, cable_length_ft !== undefined ? cable_length_ft : existing.cable_length_ft, vlan_id !== undefined ? vlan_id : existing.vlan_id, newStatus, notes !== undefined ? notes : existing.notes, req.params.id);
 
-  res.json(db.prepare(CONNECTION_SELECT + ' WHERE c.id = ?').get(req.params.id));
+  const updated = db.prepare(CONNECTION_SELECT + ' WHERE c.id = ?').get(req.params.id);
+  const repatched = newPortA !== existing.port_a_id || newPortB !== existing.port_b_id;
+  logHistory(db, {
+    entity_type: 'connection', entity_id: updated.id, action: repatched ? 'moved' : 'updated',
+    summary: `${repatched ? 'Re-patched' : 'Edited'} ${updated.device_a_name}/${updated.port_a_label} ↔ ${updated.device_b_name}/${updated.port_b_label}${newStatus !== existing.status ? ` · status → ${newStatus}` : ''}`,
+    device_a_id: updated.device_a_id, device_b_id: updated.device_b_id,
+  });
+  res.json(updated);
 });
 
 router.delete('/:id', (req, res) => {
   const db = getDb();
-  const conn = db.prepare('SELECT id FROM connections WHERE id = ?').get(req.params.id);
+  const conn = db.prepare(CONNECTION_SELECT + ' WHERE c.id = ?').get(req.params.id);
   if (!conn) return res.status(404).json({ error: 'Not found' });
   const photos = db.prepare(`SELECT filename FROM attachments WHERE entity_type='connection' AND entity_id=?`).all(req.params.id);
   db.prepare(`DELETE FROM attachments WHERE entity_type='connection' AND entity_id=?`).run(req.params.id);
   for (const p of photos) fs.unlink(path.join(UPLOAD_DIR, p.filename), () => {});
   db.prepare('DELETE FROM connections WHERE id = ?').run(req.params.id);
+  logHistory(db, {
+    entity_type: 'connection', entity_id: Number(req.params.id), action: 'deleted',
+    summary: `Removed connection ${conn.device_a_name}/${conn.port_a_label} ↔ ${conn.device_b_name}/${conn.port_b_label}`,
+    device_a_id: conn.device_a_id, device_b_id: conn.device_b_id,
+  });
   res.json({ ok: true });
 });
 

@@ -84,6 +84,18 @@ export default function Devices() {
         }
       }
 
+      // Create power outlets from the template (UPS / PDU)
+      if (selectedTemplate && createPortsFromTemplate && (selectedTemplate.default_outlets?.length > 0)) {
+        for (const o of selectedTemplate.default_outlets) {
+          await api.post('/power/outlets', {
+            device_id: newDevice.id,
+            label: o.label,
+            outlet_type: o.outlet_type,
+            max_watts: o.max_watts || null,
+          })
+        }
+      }
+
       setShowAdd(false)
       setForm({ name: '', device_type: 'switch', make: '', model: '', os: '', form_factor: '', location_id: '', rack_unit_start: '', rack_unit_height: '', management_ip: '', notes: '' })
       setSelectedTemplate(null)
@@ -211,7 +223,12 @@ export default function Devices() {
               {selectedTemplate && (
                 <div className="mt-2 flex items-center gap-2">
                   <input type="checkbox" id="createPorts" checked={createPortsFromTemplate} onChange={e => setCreatePortsFromTemplate(e.target.checked)} className="rounded"/>
-                  <label htmlFor="createPorts" className="text-xs text-gray-400">Create {selectedTemplate.default_ports.length} port{selectedTemplate.default_ports.length !== 1 ? 's' : ''} from template</label>
+                  <label htmlFor="createPorts" className="text-xs text-gray-400">
+                    Create {[
+                      selectedTemplate.default_ports.length ? `${selectedTemplate.default_ports.length} port${selectedTemplate.default_ports.length !== 1 ? 's' : ''}` : null,
+                      selectedTemplate.default_outlets?.length ? `${selectedTemplate.default_outlets.length} outlet${selectedTemplate.default_outlets.length !== 1 ? 's' : ''}` : null,
+                    ].filter(Boolean).join(' + ') || 'items'} from template
+                  </label>
                 </div>
               )}
             </div>

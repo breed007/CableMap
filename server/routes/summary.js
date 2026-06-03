@@ -11,6 +11,8 @@ router.get('/', (req, res) => {
   const total_vlans = db.prepare('SELECT COUNT(*) as c FROM vlans').get().c;
   const total_photos = db.prepare('SELECT COUNT(*) as c FROM attachments').get().c;
   const total_racks = db.prepare('SELECT COUNT(*) as c FROM locations WHERE is_rack = 1').get().c;
+  const powered_devices = db.prepare('SELECT COUNT(DISTINCT device_id) as c FROM power_connections').get().c;
+  const total_watts = db.prepare('SELECT COALESCE(SUM(watts),0) as w FROM power_connections').get().w;
 
   const connected_port_ids = db.prepare(`
     SELECT port_a_id as id FROM connections UNION SELECT port_b_id FROM connections
@@ -43,6 +45,8 @@ router.get('/', (req, res) => {
     total_vlans,
     total_photos,
     total_racks,
+    powered_devices,
+    total_watts,
     unconnected_port_count,
     recent_connections,
     alerts: {

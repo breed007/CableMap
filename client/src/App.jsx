@@ -10,6 +10,7 @@ import Canvas from './pages/Canvas'
 import Racks from './pages/Racks'
 import Gallery from './pages/Gallery'
 import Templates from './pages/Templates'
+import History from './pages/History'
 import VlanManager from './pages/VlanManager'
 import Search from './pages/Search'
 import Import from './pages/Import'
@@ -47,6 +48,7 @@ export default function App() {
           <Route path="canvas" element={<Canvas />} />
           <Route path="racks" element={<Racks />} />
           <Route path="templates" element={<Templates />} />
+          <Route path="history" element={<History />} />
           <Route path="photos" element={<Gallery />} />
           <Route path="vlans" element={<VlanManager />} />
           <Route path="search" element={<Search />} />

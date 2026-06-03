@@ -6,7 +6,7 @@ CableMap is a self-hosted, single-binary-ish web app (Node + SQLite) with a dark
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-06B6D4.svg)](LICENSE)
 ![Node](https://img.shields.io/badge/Node-20%2B-22C55E.svg)
-![Status](https://img.shields.io/badge/release-v0.1.0-3B82F6.svg)
+![Status](https://img.shields.io/badge/release-v0.2.0-3B82F6.svg)
 
 ---
 
@@ -27,21 +27,24 @@ Home labs grow organically. You add a switch, a NAS, an AP, a UPS — and six mo
 - **Port trace algorithm** — `GET /api/ports/:id/trace` walks the physical path hop-by-hop (including patch-panel pass-through and cycle detection).
 - **Rack elevation view** — a real front-of-rack "U" diagram driven by each device's rack position. Click a slot to jump to the device; passive occupants (UPS, shelves, blank panels) take up space too.
 - **Canvas view** — a [React Flow](https://reactflow.com/) topology map with device nodes, color-coded cable edges, draggable layout, and VLAN/location filtering.
+- **Power mapping** — model UPS/PDU outlets and which device each one feeds (with receptacle types and estimated draw). Device detail shows an outlet map for power sources and a "powered by" panel for everything else.
+- **Change history** — an append-only timeline of every device, connection, and power change, with a global History page and a per-device view.
 - **Photos & documents** — attach images (cable traces, device shots, rack photos) with auto-generated thumbnails, plus PDF spec sheets and Visio stencils. There's also a free-form photo gallery.
-- **325 built-in device templates** across 25+ vendors — pick a model and the device form auto-fills make, type, rack height, and ports.
+- **Full backup & restore** — one-click ZIP of all data + uploaded files, and a guarded restore.
+- **344 built-in device templates** across 25+ vendors — pick a model and the device form auto-fills make, type, rack height, ports, and (for UPS/PDU) outlets.
 - **Custom templates** — create your own gear (manufacturer, model, OS/firmware, form factor, ports, photo, spec sheet, product URLs). Built-ins are read-only; your custom ones are fully editable down to individual ports.
 - **VLAN manager, full-text search, CSV import/export, and PDF port-map export.**
 - **Single-user session auth**, dark-mode-only UI, mobile-friendly list/search views.
 
 ### Built-in template library
 
-325 templates spanning networking, security, NAS, and power gear, including:
+344 templates spanning networking, security, NAS, and power gear, including:
 
 - **Ubiquiti** — the UniFi lineup (gateways, switches, access points, aggregation)
 - **Firewalls / NGFW** — Fortinet (FortiGate/FortiSwitch/FortiAP, D/E/F gens), Palo Alto Networks (PA-200 → PA-5400), Cisco (ASA, Firepower, Secure Firewall), Cisco Meraki MX, Netgate/pfSense, OPNsense, Sophos XGS, SonicWall TZ, Protectli
 - **Switches / APs** — Cisco Catalyst (1200/1300, 2960-X, 3850, 9200/9300) & Meraki MS/MR, TP-Link Omada, MikroTik, Netgear, Aruba Instant On
 - **NAS** — Synology, QNAP, TrueNAS/iXsystems, Asustor, UGREEN, Drobo, plus custom DIY builds
-- **UPS / power** — APC, CyberPower, Eaton, Tripp Lite, Vertiv
+- **UPS / power** — APC, CyberPower, Eaton, Tripp Lite, Vertiv (rackmount + tower/desktop), plus rack PDUs — all with outlet definitions
 - **Generic** — patch panels, rackmount servers, UPS, shelves/drawers, blank rackspace, DIY
 
 > ⚠️ Template port layouts are **best-effort reference data** to save you typing — not a guaranteed spec sheet. Every value is editable after you add a device, and you can create your own custom templates. Corrections via PR are welcome.
@@ -171,6 +174,10 @@ GET|POST        /api/connections
 GET|POST        /api/vlans
 GET|POST|PUT|DELETE /api/device-templates   (custom templates editable; built-ins read-only)
 GET|POST|PUT|DELETE /api/attachments        (images + PDF/Visio docs)
+GET|POST|PUT|DELETE /api/power/outlets      POST /api/power/outlets/bulk-create
+GET|POST|PUT|DELETE /api/power/connections  (outlet → device power mapping)
+GET             /api/history                GET /api/history/device/:id
+GET             /api/backup/export          POST /api/backup/import
 GET             /api/search?q=              GET /api/summary
 POST            /api/import/connections     GET /api/export/connections
 GET             /api/export/device/:id/pdf

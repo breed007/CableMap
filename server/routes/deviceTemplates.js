@@ -8,7 +8,7 @@ const DATA_DIR = process.env.DATA_DIR || path.resolve(__dirname, '../../data');
 const UPLOAD_DIR = path.resolve(DATA_DIR, 'uploads');
 
 function serialize(t) {
-  return { ...t, default_ports: JSON.parse(t.default_ports || '[]') };
+  return { ...t, default_ports: JSON.parse(t.default_ports || '[]'), default_outlets: JSON.parse(t.default_outlets || '[]') };
 }
 
 router.get('/', (req, res) => {
@@ -34,10 +34,11 @@ router.get('/:id', (req, res) => {
 // Create a custom template
 router.post('/', (req, res) => {
   const db = getDb();
-  const { make, model, sku, device_type, default_ports, rack_unit_height, os, form_factor, notes, product_url, datasheet_url } = req.body;
+  const { make, model, sku, device_type, default_ports, default_outlets, rack_unit_height, os, form_factor, notes, product_url, datasheet_url } = req.body;
   if (!model || !device_type) return res.status(400).json({ error: 'model and device_type are required' });
 
   const ports = Array.isArray(default_ports) ? default_ports : [];
+  const outlets = Array.isArray(default_outlets) ? default_outlets : [];
   // Generate a unique SKU if none provided / collides.
   let finalSku = (sku && sku.trim()) || `CUSTOM-${(make || 'gen').toUpperCase().replace(/[^A-Z0-9]/g, '')}-${Date.now()}`;
   if (db.prepare('SELECT 1 FROM device_templates WHERE sku = ?').get(finalSku)) {
@@ -45,11 +46,11 @@ router.post('/', (req, res) => {
   }
 
   const result = db.prepare(
-    `INSERT INTO device_templates (make, model, sku, device_type, port_count, default_ports, rack_unit_height, is_custom, os, form_factor, notes, product_url, datasheet_url)
-     VALUES (?, ?, ?, ?, ?, ?, ?, 1, ?, ?, ?, ?, ?)`
+    `INSERT INTO device_templates (make, model, sku, device_type, port_count, default_ports, rack_unit_height, is_custom, os, form_factor, notes, product_url, datasheet_url, default_outlets)
+     VALUES (?, ?, ?, ?, ?, ?, ?, 1, ?, ?, ?, ?, ?, ?)`
   ).run(
     make || 'Custom', model, finalSku, device_type, ports.length, JSON.stringify(ports),
-    rack_unit_height || null, os || null, form_factor || null, notes || null, product_url || null, datasheet_url || null
+    rack_unit_height || null, os || null, form_factor || null, notes || null, product_url || null, datasheet_url || null, JSON.stringify(outlets)
   );
   res.status(201).json(serialize(db.prepare('SELECT * FROM device_templates WHERE id = ?').get(result.lastInsertRowid)));
 });
@@ -61,11 +62,12 @@ router.put('/:id', (req, res) => {
   if (!t) return res.status(404).json({ error: 'Not found' });
   if (!t.is_custom) return res.status(403).json({ error: 'Seeded templates are read-only' });
 
-  const { make, model, device_type, default_ports, rack_unit_height, os, form_factor, notes, product_url, datasheet_url } = req.body;
+  const { make, model, device_type, default_ports, default_outlets, rack_unit_height, os, form_factor, notes, product_url, datasheet_url } = req.body;
   const ports = Array.isArray(default_ports) ? default_ports : JSON.parse(t.default_ports || '[]');
+  const outlets = Array.isArray(default_outlets) ? default_outlets : JSON.parse(t.default_outlets || '[]');
 
   db.prepare(
-    `UPDATE device_templates SET make=?, model=?, device_type=?, port_count=?, default_ports=?, rack_unit_height=?, os=?, form_factor=?, notes=?, product_url=?, datasheet_url=?
+    `UPDATE device_templates SET make=?, model=?, device_type=?, port_count=?, default_ports=?, rack_unit_height=?, os=?, form_factor=?, notes=?, product_url=?, datasheet_url=?, default_outlets=?
      WHERE id=?`
   ).run(
     make ?? t.make, model ?? t.model, device_type ?? t.device_type, ports.length, JSON.stringify(ports),
@@ -75,6 +77,7 @@ router.put('/:id', (req, res) => {
     notes !== undefined ? notes : t.notes,
     product_url !== undefined ? product_url : t.product_url,
     datasheet_url !== undefined ? datasheet_url : t.datasheet_url,
+    JSON.stringify(outlets),
     req.params.id
   );
   res.json(serialize(db.prepare('SELECT * FROM device_templates WHERE id = ?').get(req.params.id)));

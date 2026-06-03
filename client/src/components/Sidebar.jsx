@@ -26,6 +26,9 @@ const navItems = [
   { to: '/vlans', label: 'VLANs', icon: (
     <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><rect x="1" y="3" width="14" height="3" rx="0.8" stroke="currentColor" strokeWidth="1.3"/><rect x="1" y="7" width="14" height="3" rx="0.8" stroke="currentColor" strokeWidth="1.3"/><rect x="1" y="11" width="14" height="3" rx="0.8" stroke="currentColor" strokeWidth="1.3"/></svg>
   )},
+  { to: '/history', label: 'History', icon: (
+    <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="6.5" stroke="currentColor" strokeWidth="1.3"/><path d="M8 4.5V8l2.5 1.5" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round"/></svg>
+  )},
   { to: '/search', label: 'Search', icon: (
     <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><circle cx="7" cy="7" r="4.5" stroke="currentColor" strokeWidth="1.3"/><line x1="10.5" y1="10.5" x2="14" y2="14" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round"/></svg>
   )},

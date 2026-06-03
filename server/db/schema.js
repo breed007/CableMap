@@ -90,7 +90,48 @@ CREATE TABLE IF NOT EXISTS device_templates (
   form_factor TEXT,
   notes TEXT,
   product_url TEXT,
-  datasheet_url TEXT
+  datasheet_url TEXT,
+  default_outlets TEXT NOT NULL DEFAULT '[]'
+);
+
+-- Power outlets on a UPS / PDU device.
+-- outlet_type: nema_5_15 | nema_5_20 | c13 | c19 | other
+CREATE TABLE IF NOT EXISTS power_outlets (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  device_id INTEGER NOT NULL REFERENCES devices(id) ON DELETE CASCADE,
+  outlet_number INTEGER,
+  label TEXT NOT NULL,
+  outlet_type TEXT NOT NULL DEFAULT 'nema_5_15',
+  max_watts INTEGER,
+  notes TEXT,
+  created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+);
+
+-- A device powered from a specific outlet. One outlet powers at most one device
+-- (enforced in the API layer); a device may draw from several outlets (dual PSU).
+CREATE TABLE IF NOT EXISTS power_connections (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  outlet_id INTEGER NOT NULL REFERENCES power_outlets(id) ON DELETE CASCADE,
+  device_id INTEGER NOT NULL REFERENCES devices(id) ON DELETE CASCADE,
+  watts INTEGER,
+  notes TEXT,
+  created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+  updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Append-only audit log / change history.
+-- entity_type: 'device' | 'connection' | 'power_connection' | 'vlan' | ...
+-- action: 'created' | 'updated' | 'deleted' | 'moved'
+CREATE TABLE IF NOT EXISTS history (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  entity_type TEXT NOT NULL,
+  entity_id INTEGER,
+  action TEXT NOT NULL,
+  summary TEXT NOT NULL,
+  meta TEXT,
+  device_a_id INTEGER,
+  device_b_id INTEGER,
+  created_at DATETIME DEFAULT CURRENT_TIMESTAMP
 );
 
 -- Polymorphic photo / file attachments.
@@ -114,6 +155,11 @@ CREATE INDEX IF NOT EXISTS idx_connections_port_a ON connections(port_a_id);
 CREATE INDEX IF NOT EXISTS idx_connections_port_b ON connections(port_b_id);
 CREATE INDEX IF NOT EXISTS idx_devices_location ON devices(location_id);
 CREATE INDEX IF NOT EXISTS idx_attachments_entity ON attachments(entity_type, entity_id);
+CREATE INDEX IF NOT EXISTS idx_power_outlets_device ON power_outlets(device_id);
+CREATE UNIQUE INDEX IF NOT EXISTS idx_power_connections_outlet ON power_connections(outlet_id);
+CREATE INDEX IF NOT EXISTS idx_power_connections_device ON power_connections(device_id);
+CREATE INDEX IF NOT EXISTS idx_history_entity ON history(entity_type, entity_id);
+CREATE INDEX IF NOT EXISTS idx_history_created ON history(created_at);
 `;
 
 module.exports = schema;

@@ -15,12 +15,30 @@ export default function Export() {
 
   const downloadConnections = () => { window.location.href = '/api/export/connections' }
   const downloadDevicePdf = (id) => { window.location.href = `/api/export/device/${id}/pdf` }
+  const downloadBackup = () => { window.location.href = '/api/backup/export' }
 
   return (
     <div className="p-6 max-w-3xl">
       <div className="mb-6">
         <h1 className="text-xl font-semibold text-white mb-1">Export</h1>
         <p className="text-sm text-gray-500">Download your network documentation.</p>
+      </div>
+
+      {/* Full backup */}
+      <div className="bg-[#141414] border border-[#06B6D4]/30 rounded-lg p-5 mb-4">
+        <div className="flex items-center justify-between">
+          <div>
+            <div className="text-sm font-semibold text-white mb-1">Full Backup — ZIP</div>
+            <div className="text-xs text-gray-500">
+              Everything: devices, ports, connections, racks, VLANs, power mapping, history, custom templates, and all photos &amp; documents. Restore from the Import page.
+            </div>
+          </div>
+          <button onClick={downloadBackup}
+            className="bg-[#06B6D4] hover:bg-[#0891b2] text-white text-sm font-medium px-4 py-2 rounded-lg transition-colors flex items-center gap-2 shrink-0">
+            <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M7 1v8M4 6l3 3 3-3" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round"/><path d="M1 11v1a1 1 0 001 1h10a1 1 0 001-1v-1" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round"/></svg>
+            Download Backup
+          </button>
+        </div>
       </div>
 
       {/* All connections CSV */}

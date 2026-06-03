@@ -78,6 +78,22 @@ export const FORM_FACTORS = [
 
 export const FORM_FACTOR_LABELS = Object.fromEntries(FORM_FACTORS.map(f => [f.value, f.label]))
 
+export const OUTLET_TYPES = [
+  { value: 'nema_5_15', label: 'NEMA 5-15R' },
+  { value: 'nema_5_20', label: 'NEMA 5-20R' },
+  { value: 'c13', label: 'IEC C13' },
+  { value: 'c19', label: 'IEC C19' },
+  { value: 'other', label: 'Other' },
+]
+export const OUTLET_TYPE_LABELS = Object.fromEntries(OUTLET_TYPES.map(o => [o.value, o.label]))
+
+export const HISTORY_ACTION_COLORS = {
+  created: '#22C55E',
+  updated: '#06B6D4',
+  moved: '#F59E0B',
+  deleted: '#EF4444',
+}
+
 export const DEVICE_TYPE_COLORS = {
   switch: '#3B82F6', patch_panel: '#8B5CF6', router: '#06B6D4', firewall: '#EF4444',
   server: '#F59E0B', access_point: '#22C55E', nas: '#EC4899', modem: '#D97706',
