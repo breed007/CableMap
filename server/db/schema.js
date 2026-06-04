@@ -30,6 +30,10 @@ CREATE TABLE IF NOT EXISTS devices (
   rack_unit_height INTEGER,
   management_ip TEXT,
   notes TEXT,
+  -- Power capacity (UPS/PDU). capacity_watts is the load budget used for % load.
+  capacity_watts INTEGER,
+  capacity_va INTEGER,
+  breaker_amps INTEGER,
   canvas_x REAL DEFAULT 0,
   canvas_y REAL DEFAULT 0,
   created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
@@ -91,7 +95,9 @@ CREATE TABLE IF NOT EXISTS device_templates (
   notes TEXT,
   product_url TEXT,
   datasheet_url TEXT,
-  default_outlets TEXT NOT NULL DEFAULT '[]'
+  default_outlets TEXT NOT NULL DEFAULT '[]',
+  default_capacity_watts INTEGER,
+  default_capacity_va INTEGER
 );
 
 -- Power outlets on a UPS / PDU device.

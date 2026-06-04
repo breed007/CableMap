@@ -92,6 +92,23 @@ export default function PowerSection({ device, onChange }) {
       {/* Outlets: what this UPS/PDU provides */}
       {isPowerSource && (
         <div className="bg-[#141414] border border-[#1f2937] rounded-lg mb-4">
+          {/* Load / capacity bar */}
+          {device.power?.capacity_watts ? (() => {
+            const p = device.power
+            const pct = Math.min(p.load_pct, 100)
+            const barColor = p.overloaded ? '#EF4444' : p.load_pct >= 80 ? '#F59E0B' : '#22C55E'
+            return (
+              <div className="px-4 pt-3">
+                <div className="flex items-center justify-between text-xs mb-1.5">
+                  <span className="text-gray-400">Load</span>
+                  <span style={{ color: barColor }}>{p.connected_watts}W / {p.capacity_watts}W · {p.load_pct}%{p.overloaded ? ' — OVERLOADED' : ''}</span>
+                </div>
+                <div className="h-2 rounded-full bg-[#1e1e1e] overflow-hidden">
+                  <div className="h-full rounded-full transition-all" style={{ width: `${pct}%`, backgroundColor: barColor }} />
+                </div>
+              </div>
+            )
+          })() : null}
           <div className="flex items-center justify-between px-4 py-3 border-b border-[#1f2937]">
             <h2 className="text-sm font-semibold text-white">
               Outlets <span className="text-gray-500 font-normal">({usedOutlets}/{outlets.length} used{totalWatts ? ` · ${totalWatts}W` : ''})</span>

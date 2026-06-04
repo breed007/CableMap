@@ -29,6 +29,9 @@ const navItems = [
   { to: '/history', label: 'History', icon: (
     <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="6.5" stroke="currentColor" strokeWidth="1.3"/><path d="M8 4.5V8l2.5 1.5" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round"/></svg>
   )},
+  { to: '/health', label: 'Health', icon: (
+    <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M1 8h3l2-5 3 10 2-5h3" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round"/></svg>
+  )},
   { to: '/search', label: 'Search', icon: (
     <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><circle cx="7" cy="7" r="4.5" stroke="currentColor" strokeWidth="1.3"/><line x1="10.5" y1="10.5" x2="14" y2="14" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round"/></svg>
   )},

@@ -14,7 +14,7 @@ export default function Devices() {
   const [filterLocation, setFilterLocation] = useState('')
   const [filterType, setFilterType] = useState('')
   const [showAdd, setShowAdd] = useState(false)
-  const [form, setForm] = useState({ name: '', device_type: 'switch', make: '', model: '', os: '', form_factor: '', location_id: '', rack_unit_start: '', rack_unit_height: '', management_ip: '', notes: '' })
+  const [form, setForm] = useState({ name: '', device_type: 'switch', make: '', model: '', os: '', form_factor: '', location_id: '', rack_unit_start: '', rack_unit_height: '', management_ip: '', notes: '', capacity_watts: '', capacity_va: '', breaker_amps: '' })
   const [selectedTemplate, setSelectedTemplate] = useState(null)
   const [createPortsFromTemplate, setCreatePortsFromTemplate] = useState(true)
   const [saving, setSaving] = useState(false)
@@ -46,6 +46,8 @@ export default function Devices() {
       os: tpl.os || f.os,
       form_factor: tpl.form_factor || (tpl.rack_unit_height ? 'rackmount' : f.form_factor),
       rack_unit_height: tpl.rack_unit_height || '',
+      capacity_watts: tpl.default_capacity_watts || f.capacity_watts,
+      capacity_va: tpl.default_capacity_va || f.capacity_va,
     }))
   }
 
@@ -59,6 +61,9 @@ export default function Devices() {
         location_id: form.location_id || null,
         rack_unit_start: form.rack_unit_start ? parseInt(form.rack_unit_start) : null,
         rack_unit_height: form.rack_unit_height ? parseInt(form.rack_unit_height) : null,
+        capacity_watts: form.capacity_watts ? parseInt(form.capacity_watts) : null,
+        capacity_va: form.capacity_va ? parseInt(form.capacity_va) : null,
+        breaker_amps: form.breaker_amps ? parseInt(form.breaker_amps) : null,
       })
       const newDevice = res.data
 
@@ -97,7 +102,7 @@ export default function Devices() {
       }
 
       setShowAdd(false)
-      setForm({ name: '', device_type: 'switch', make: '', model: '', os: '', form_factor: '', location_id: '', rack_unit_start: '', rack_unit_height: '', management_ip: '', notes: '' })
+      setForm({ name: '', device_type: 'switch', make: '', model: '', os: '', form_factor: '', location_id: '', rack_unit_start: '', rack_unit_height: '', management_ip: '', notes: '', capacity_watts: '', capacity_va: '', breaker_amps: '' })
       setSelectedTemplate(null)
       load()
     } catch (err) {
@@ -293,6 +298,26 @@ export default function Devices() {
                 <input type="number" value={form.rack_unit_height} onChange={e => setForm(f => ({ ...f, rack_unit_height: e.target.value }))}
                   className="w-full bg-[#1e1e1e] border border-[#374151] rounded px-3 py-2 text-sm text-white focus:outline-none focus:border-[#06B6D4]" placeholder="1"/>
               </div>
+              {(form.device_type === 'ups' || form.device_type === 'pdu') && (
+                <div className="col-span-2 grid grid-cols-3 gap-3 bg-[#0d0d0d] border border-[#1f2937] rounded-lg p-3">
+                  <div className="col-span-3 text-[11px] text-gray-500 uppercase tracking-wide">Power Capacity</div>
+                  <div>
+                    <label className="block text-xs text-gray-400 mb-1.5">Capacity (W)</label>
+                    <input type="number" value={form.capacity_watts} onChange={e => setForm(f => ({ ...f, capacity_watts: e.target.value }))}
+                      className="w-full bg-[#1e1e1e] border border-[#374151] rounded px-3 py-2 text-sm text-white focus:outline-none focus:border-[#06B6D4]" placeholder="1000"/>
+                  </div>
+                  <div>
+                    <label className="block text-xs text-gray-400 mb-1.5">Rating (VA)</label>
+                    <input type="number" value={form.capacity_va} onChange={e => setForm(f => ({ ...f, capacity_va: e.target.value }))}
+                      className="w-full bg-[#1e1e1e] border border-[#374151] rounded px-3 py-2 text-sm text-white focus:outline-none focus:border-[#06B6D4]" placeholder="1500"/>
+                  </div>
+                  <div>
+                    <label className="block text-xs text-gray-400 mb-1.5">Breaker (A)</label>
+                    <input type="number" value={form.breaker_amps} onChange={e => setForm(f => ({ ...f, breaker_amps: e.target.value }))}
+                      className="w-full bg-[#1e1e1e] border border-[#374151] rounded px-3 py-2 text-sm text-white focus:outline-none focus:border-[#06B6D4]" placeholder="15"/>
+                  </div>
+                </div>
+              )}
               <div className="col-span-2">
                 <label className="block text-xs text-gray-400 mb-1.5">Notes</label>
                 <textarea value={form.notes} onChange={e => setForm(f => ({ ...f, notes: e.target.value }))} rows="2"

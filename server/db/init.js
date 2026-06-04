@@ -39,8 +39,8 @@ if (!columnExists('locations', 'rack_units')) {
   console.log('Migrated: locations.rack_units');
 }
 
-// device_templates: custom-template support fields + power outlet defaults
-for (const col of [['is_custom', 'INTEGER DEFAULT 0'], ['os', 'TEXT'], ['form_factor', 'TEXT'], ['notes', 'TEXT'], ['product_url', 'TEXT'], ['datasheet_url', 'TEXT'], ['default_outlets', "TEXT NOT NULL DEFAULT '[]'"]]) {
+// device_templates: custom-template support fields + power outlet defaults + capacity
+for (const col of [['is_custom', 'INTEGER DEFAULT 0'], ['os', 'TEXT'], ['form_factor', 'TEXT'], ['notes', 'TEXT'], ['product_url', 'TEXT'], ['datasheet_url', 'TEXT'], ['default_outlets', "TEXT NOT NULL DEFAULT '[]'"], ['default_capacity_watts', 'INTEGER'], ['default_capacity_va', 'INTEGER']]) {
   if (tableExists('device_templates') && !columnExists('device_templates', col[0])) {
     db.exec(`ALTER TABLE device_templates ADD COLUMN ${col[0]} ${col[1]}`);
     console.log(`Migrated: device_templates.${col[0]}`);
@@ -122,9 +122,9 @@ if (devicesSql && devicesSql.sql.includes("CHECK(device_type IN")) {
   console.log('Migrated: devices table rebuilt without device_type CHECK.');
 }
 
-// devices: OS/firmware + form factor (after any table rebuild above, so the
-// rebuild's SELECT * column counts stay aligned)
-for (const col of [['os', 'TEXT'], ['form_factor', 'TEXT']]) {
+// devices: OS/firmware + form factor + power capacity (after any table rebuild
+// above, so the rebuild's SELECT * column counts stay aligned)
+for (const col of [['os', 'TEXT'], ['form_factor', 'TEXT'], ['capacity_watts', 'INTEGER'], ['capacity_va', 'INTEGER'], ['breaker_amps', 'INTEGER']]) {
   if (tableExists('devices') && !columnExists('devices', col[0])) {
     db.exec(`ALTER TABLE devices ADD COLUMN ${col[0]} ${col[1]}`);
     console.log(`Migrated: devices.${col[0]}`);
@@ -155,21 +155,25 @@ if (vlanCount === 0) {
 
 // Templates are seeded additively by SKU so new gear appears on existing DBs.
 const insertTemplate = db.prepare(
-  `INSERT INTO device_templates (make, model, sku, device_type, port_count, default_ports, rack_unit_height, default_outlets)
-   VALUES (?, ?, ?, ?, ?, ?, ?, ?)`
+  `INSERT INTO device_templates (make, model, sku, device_type, port_count, default_ports, rack_unit_height, default_outlets, default_capacity_watts, default_capacity_va)
+   VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
 );
 const updateOutlets = db.prepare('UPDATE device_templates SET default_outlets = ? WHERE sku = ? AND is_custom = 0');
+const updateCapacity = db.prepare('UPDATE device_templates SET default_capacity_watts = ?, default_capacity_va = ? WHERE sku = ? AND is_custom = 0');
 const skuExists = db.prepare('SELECT 1 FROM device_templates WHERE sku = ?');
 let added = 0, outletUpdates = 0;
 for (const t of seedTemplates) {
   const outletsJson = t.default_outlets || '[]';
   if (skuExists.get(t.sku)) {
-    // Backfill outlet definitions onto existing built-in UPS/PDU templates.
+    // Backfill outlet + capacity definitions onto existing built-in templates.
     if (outletsJson !== '[]') { updateOutlets.run(outletsJson, t.sku); outletUpdates++; }
+    if (t.default_capacity_watts != null || t.default_capacity_va != null) {
+      updateCapacity.run(t.default_capacity_watts ?? null, t.default_capacity_va ?? null, t.sku);
+    }
     continue;
   }
   const ports = JSON.parse(t.default_ports);
-  insertTemplate.run(t.make, t.model, t.sku, t.device_type, ports.length, t.default_ports, t.rack_unit_height || null, outletsJson);
+  insertTemplate.run(t.make, t.model, t.sku, t.device_type, ports.length, t.default_ports, t.rack_unit_height || null, outletsJson, t.default_capacity_watts ?? null, t.default_capacity_va ?? null);
   added++;
 }
 console.log(added > 0 ? `Seeded ${added} new device templates.` : 'Device templates up to date.');

@@ -46,6 +46,7 @@ app.use('/api/device-templates', require('./routes/deviceTemplates'));
 app.use('/api/attachments', require('./routes/attachments'));
 app.use('/api/power', require('./routes/power'));
 app.use('/api/history', require('./routes/history'));
+app.use('/api/health', require('./routes/health'));
 app.use('/api/backup', require('./routes/backup'));
 app.use('/api/export', require('./routes/importExport'));
 app.use('/api/import', require('./routes/importExport'));

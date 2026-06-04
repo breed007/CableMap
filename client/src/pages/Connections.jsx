@@ -1,4 +1,5 @@
 import { useEffect, useState, useCallback } from 'react'
+import { Link } from 'react-router-dom'
 import api from '../utils/api'
 import Modal from '../components/Modal'
 import PhotoUploader from '../components/PhotoUploader'
@@ -139,9 +140,15 @@ export default function Connections() {
           <h1 className="text-xl font-semibold text-white">Connections</h1>
           <p className="text-sm text-gray-500 mt-0.5">{connections.length} connection{connections.length !== 1 ? 's' : ''}</p>
         </div>
-        <button onClick={openAdd} className="bg-[#06B6D4] hover:bg-[#0891b2] text-white text-sm font-medium px-4 py-2 rounded-lg transition-colors flex items-center gap-2">
-          <span className="text-lg leading-none">+</span> Add Connection
-        </button>
+        <div className="flex gap-2">
+          <Link to="/connections/bulk" className="text-sm px-4 py-2 bg-[#1e1e1e] hover:bg-[#374151] text-gray-300 rounded-lg transition-colors flex items-center gap-2">
+            <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M2 3h4M2 7h4M2 11h4" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round"/><path d="M8 3h4M8 7h4M8 11h4" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round"/></svg>
+            Bulk Patch
+          </Link>
+          <button onClick={openAdd} className="bg-[#06B6D4] hover:bg-[#0891b2] text-white text-sm font-medium px-4 py-2 rounded-lg transition-colors flex items-center gap-2">
+            <span className="text-lg leading-none">+</span> Add Connection
+          </button>
+        </div>
       </div>
 
       {/* Filters */}

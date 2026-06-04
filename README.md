@@ -6,7 +6,7 @@ CableMap is a self-hosted, single-binary-ish web app (Node + SQLite) with a dark
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-06B6D4.svg)](LICENSE)
 ![Node](https://img.shields.io/badge/Node-20%2B-22C55E.svg)
-![Status](https://img.shields.io/badge/release-v0.2.0-3B82F6.svg)
+![Status](https://img.shields.io/badge/release-v0.3.0-3B82F6.svg)
 
 ---
 
@@ -37,11 +37,13 @@ Home labs grow organically. You add a switch, a NAS, an AP, a UPS — and six mo
 ## Features
 
 - **Devices, ports & connections** — full CRUD with a port-conflict-aware connection model (a port can only hold one active connection at a time).
+- **Bulk patching** — patch a whole range of ports between two devices at once (switch 1–24 → panel 1–24), with a row-by-row preview and per-row conflict validation.
 - **Patch panel support** — front/back port pairs are modeled as linked ports, so a cable trace follows through the panel automatically.
 - **Port trace algorithm** — `GET /api/ports/:id/trace` walks the physical path hop-by-hop (including patch-panel pass-through and cycle detection).
 - **Rack elevation view** — a real front-of-rack "U" diagram driven by each device's rack position. Click a slot to jump to the device; passive occupants (UPS, shelves, blank panels) take up space too.
 - **Canvas view** — a [React Flow](https://reactflow.com/) topology map with device nodes, color-coded cable edges, draggable layout, and VLAN/location filtering.
-- **Power mapping** — model UPS/PDU outlets and which device each one feeds (with receptacle types and estimated draw). Device detail shows an outlet map for power sources and a "powered by" panel for everything else.
+- **Power mapping & load budgeting** — model UPS/PDU outlets and which device each one feeds (with receptacle types and estimated draw), give a power source its rated capacity, and watch a live load bar with overload warnings. Device detail shows an outlet map for power sources and a "powered by" panel for everything else.
+- **Health check** — audits your documentation for inconsistencies: double-booked ports, rack-U overlaps, overloaded power sources, unmapped power, devices with no ports, and stale planned connections.
 - **Change history** — an append-only timeline of every device, connection, and power change, with a global History page and a per-device view.
 - **Photos & documents** — attach images (cable traces, device shots, rack photos) with auto-generated thumbnails, plus PDF spec sheets and Visio stencils. There's also a free-form photo gallery.
 - **Full backup & restore** — one-click ZIP of all data + uploaded files, and a guarded restore.
@@ -184,13 +186,14 @@ GET|POST        /api/locations              GET /api/locations/:id   (rack eleva
 GET|POST        /api/devices                PUT /api/devices/:id/position
 POST            /api/devices/:id/ports/bulk-create
 GET|PUT|DELETE  /api/ports/:id              GET /api/ports/:id/trace
-GET|POST        /api/connections
+GET|POST        /api/connections            POST /api/connections/bulk   (bulk patch)
 GET|POST        /api/vlans
 GET|POST|PUT|DELETE /api/device-templates   (custom templates editable; built-ins read-only)
 GET|POST|PUT|DELETE /api/attachments        (images + PDF/Visio docs)
 GET|POST|PUT|DELETE /api/power/outlets      POST /api/power/outlets/bulk-create
 GET|POST|PUT|DELETE /api/power/connections  (outlet → device power mapping)
 GET             /api/history                GET /api/history/device/:id
+GET             /api/health                 (consistency / completeness checks)
 GET             /api/backup/export          POST /api/backup/import
 GET             /api/search?q=              GET /api/summary
 POST            /api/import/connections     GET /api/export/connections

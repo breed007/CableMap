@@ -34,14 +34,14 @@ router.get('/', (req, res) => {
 
 router.post('/', (req, res) => {
   const db = getDb();
-  const { name, device_type, make, model, os, form_factor, location_id, rack_unit_start, rack_unit_height, management_ip, notes, canvas_x, canvas_y } = req.body;
+  const { name, device_type, make, model, os, form_factor, location_id, rack_unit_start, rack_unit_height, management_ip, notes, canvas_x, canvas_y, capacity_watts, capacity_va, breaker_amps } = req.body;
   if (!name) return res.status(400).json({ error: 'name is required' });
   // device_type is free-text (custom types allowed); just require a non-empty value.
   if (!device_type || !String(device_type).trim()) return res.status(400).json({ error: 'device_type is required' });
   const result = db.prepare(
-    `INSERT INTO devices (name, device_type, make, model, os, form_factor, location_id, rack_unit_start, rack_unit_height, management_ip, notes, canvas_x, canvas_y)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
-  ).run(name, device_type, make || null, model || null, os || null, form_factor || null, location_id || null, rack_unit_start || null, rack_unit_height || null, management_ip || null, notes || null, canvas_x || 0, canvas_y || 0);
+    `INSERT INTO devices (name, device_type, make, model, os, form_factor, location_id, rack_unit_start, rack_unit_height, management_ip, notes, canvas_x, canvas_y, capacity_watts, capacity_va, breaker_amps)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
+  ).run(name, device_type, make || null, model || null, os || null, form_factor || null, location_id || null, rack_unit_start || null, rack_unit_height || null, management_ip || null, notes || null, canvas_x || 0, canvas_y || 0, capacity_watts || null, capacity_va || null, breaker_amps || null);
   logHistory(db, { entity_type: 'device', entity_id: result.lastInsertRowid, action: 'created', summary: `Added device ${name} (${device_type})`, device_a_id: result.lastInsertRowid });
   res.status(201).json(getDeviceById(db, result.lastInsertRowid));
 });
@@ -57,12 +57,16 @@ router.put('/:id', (req, res) => {
   const db = getDb();
   const device = db.prepare('SELECT * FROM devices WHERE id = ?').get(req.params.id);
   if (!device) return res.status(404).json({ error: 'Not found' });
-  const { name, device_type, make, model, os, form_factor, location_id, rack_unit_start, rack_unit_height, management_ip, notes } = req.body;
+  const { name, device_type, make, model, os, form_factor, location_id, rack_unit_start, rack_unit_height, management_ip, notes, capacity_watts, capacity_va, breaker_amps } = req.body;
   if (device_type !== undefined && !String(device_type).trim()) return res.status(400).json({ error: 'device_type cannot be empty' });
   db.prepare(
-    `UPDATE devices SET name=?, device_type=?, make=?, model=?, os=?, form_factor=?, location_id=?, rack_unit_start=?, rack_unit_height=?, management_ip=?, notes=?, updated_at=CURRENT_TIMESTAMP
+    `UPDATE devices SET name=?, device_type=?, make=?, model=?, os=?, form_factor=?, location_id=?, rack_unit_start=?, rack_unit_height=?, management_ip=?, notes=?, capacity_watts=?, capacity_va=?, breaker_amps=?, updated_at=CURRENT_TIMESTAMP
      WHERE id=?`
-  ).run(name, device_type, make || null, model || null, os || null, form_factor || null, location_id || null, rack_unit_start || null, rack_unit_height || null, management_ip || null, notes || null, req.params.id);
+  ).run(name, device_type, make || null, model || null, os || null, form_factor || null, location_id || null, rack_unit_start || null, rack_unit_height || null, management_ip || null, notes || null,
+    capacity_watts !== undefined ? (capacity_watts || null) : device.capacity_watts,
+    capacity_va !== undefined ? (capacity_va || null) : device.capacity_va,
+    breaker_amps !== undefined ? (breaker_amps || null) : device.breaker_amps,
+    req.params.id);
   // Record notable field changes
   const changes = [];
   if (name !== undefined && name !== device.name) changes.push(`renamed to ${name}`);
@@ -173,6 +177,21 @@ function getDeviceById(db, id) {
     JOIN devices sd ON o.device_id = sd.id
     WHERE pc.device_id = ?
   `).all(id);
+
+  // Load rollup for power sources (UPS/PDU): connected draw vs rated capacity
+  const totalOutlets = device.outlets.length;
+  const usedOutlets = device.outlets.filter(o => o.connected_device_id).length;
+  const connectedWatts = device.outlets.reduce((s, o) => s + (o.connected_watts || 0), 0);
+  device.power = {
+    capacity_watts: device.capacity_watts || null,
+    capacity_va: device.capacity_va || null,
+    breaker_amps: device.breaker_amps || null,
+    total_outlets: totalOutlets,
+    used_outlets: usedOutlets,
+    connected_watts: connectedWatts,
+    load_pct: device.capacity_watts ? Math.round((connectedWatts / device.capacity_watts) * 100) : null,
+    overloaded: device.capacity_watts ? connectedWatts > device.capacity_watts : false,
+  };
 
   return device;
 }

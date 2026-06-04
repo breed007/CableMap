@@ -2388,4 +2388,37 @@ const seedTemplates = [
   },
 ];
 
+// Rated capacity for UPS/PDU templates: sku -> [watts, va]. Watts is the load
+// budget used for % load; VA is the apparent-power rating. PDU "watts" is the
+// continuous limit (breaker A x 120V x 0.8).
+const POWER_CAPACITY = {
+  // APC Smart-UPS / Back-UPS
+  'APC-SMT750RM2U': [500, 750], 'APC-SMT1000RM2U': [700, 1000], 'APC-SMT1500RM2U': [1000, 1500],
+  'APC-SMT2200RM2U': [1980, 2200], 'APC-SMX1500RM2U': [1200, 1440],
+  'APC-SMT750': [500, 750], 'APC-SMT1500': [1000, 1500], 'APC-SMC1500': [900, 1500],
+  'APC-BR1500MS': [900, 1500], 'APC-BX1500M': [900, 1500],
+  // CyberPower
+  'CP-OR700LCDRM1U': [400, 700], 'CP-OR1000LCDRM1U': [600, 1000], 'CP-OR1500LCDRM1U': [900, 1500],
+  'CP-PR1500RT2U': [1500, 1500], 'CP-PR2200LCDRT2U': [1980, 2200],
+  'CP-CP1500PFCLCD': [900, 1500], 'CP-CP1350PFCLCD': [815, 1350],
+  // Eaton
+  'EATON-5P1550R': [1100, 1550], 'EATON-5PX1500RT': [1350, 1500], 'EATON-5PX2200RT': [1980, 2200],
+  'EATON-9PX1500RT': [1500, 1500], 'EATON-9PX3000RT': [3000, 3000], 'EATON-5S1500': [900, 1500], 'EATON-5SC1500': [1050, 1500],
+  // Tripp Lite
+  'TRIPP-SMART1000RM1U': [800, 1000], 'TRIPP-SMART1500RMXL2U': [1200, 1500],
+  'TRIPP-SMART1500LCD': [900, 1500], 'TRIPP-OMNI1500LCDT': [900, 1500],
+  // Vertiv
+  'VERTIV-GXT5-1500RT120': [1350, 1500], 'VERTIV-GXT5-3000RT120': [2700, 3000], 'VERTIV-PSI5-1500RT120': [1350, 1500],
+  // Generic UPS
+  'GEN-UPS-1U': [1000, 1500], 'GEN-UPS-2U': [1980, 2200],
+  // PDUs — continuous watts from breaker rating (15A x 120V x 0.8 = 1440W; 20A = 1920W)
+  'APC-AP9559': [1440, null], 'APC-AP8861': [1920, null], 'CP-PDU15M10AT': [1440, null],
+  'CP-PDU15B2F12R': [1440, null], 'TRIPP-PDUMH15': [1440, null], 'EATON-EMAB03': [1440, null],
+  'GEN-PDU-1U': [1440, null], 'GEN-PDU-0U-24': [1920, null],
+};
+for (const t of seedTemplates) {
+  const cap = POWER_CAPACITY[t.sku];
+  if (cap) { t.default_capacity_watts = cap[0]; t.default_capacity_va = cap[1]; }
+}
+
 module.exports = { seedLocations, seedVlans, seedTemplates };

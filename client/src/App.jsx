@@ -11,6 +11,8 @@ import Racks from './pages/Racks'
 import Gallery from './pages/Gallery'
 import Templates from './pages/Templates'
 import History from './pages/History'
+import Health from './pages/Health'
+import BulkPatch from './pages/BulkPatch'
 import VlanManager from './pages/VlanManager'
 import Search from './pages/Search'
 import Import from './pages/Import'
@@ -45,7 +47,9 @@ export default function App() {
           <Route path="devices" element={<Devices />} />
           <Route path="devices/:id" element={<DeviceDetail />} />
           <Route path="connections" element={<Connections />} />
+          <Route path="connections/bulk" element={<BulkPatch />} />
           <Route path="canvas" element={<Canvas />} />
+          <Route path="health" element={<Health />} />
           <Route path="racks" element={<Racks />} />
           <Route path="templates" element={<Templates />} />
           <Route path="history" element={<History />} />

@@ -87,6 +87,62 @@ router.post('/', (req, res) => {
   res.status(201).json(created);
 });
 
+// Bulk patch: create many connections at once (e.g. switch ports 1-24 -> panel
+// ports 1-24). Validates each row (ports exist, differ, no active conflict —
+// including conflicts within the same batch) and creates the valid ones.
+router.post('/bulk', (req, res) => {
+  const db = getDb();
+  const rows = Array.isArray(req.body.connections) ? req.body.connections : [];
+  if (rows.length === 0) return res.status(400).json({ error: 'connections array required' });
+  if (rows.length > 500) return res.status(400).json({ error: 'Too many connections in one batch (max 500)' });
+
+  const created = [];
+  const errors = [];
+  const usedInBatch = new Set(); // port ids claimed by active rows in this batch
+
+  const insert = db.prepare(
+    `INSERT INTO connections (port_a_id, port_b_id, cable_type, cable_color, cable_length_ft, vlan_id, status, notes)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?)`
+  );
+  const activeConflict = db.prepare(`
+    SELECT id FROM connections
+    WHERE (port_a_id = ? OR port_b_id = ? OR port_a_id = ? OR port_b_id = ?) AND status = 'active'
+  `);
+  const portExists = db.prepare('SELECT id FROM ports WHERE id = ?');
+
+  const tx = db.transaction(() => {
+    rows.forEach((row, i) => {
+      const { port_a_id, port_b_id, cable_type, cable_color, cable_length_ft, vlan_id, status, notes } = row;
+      const a = Number(port_a_id), b = Number(port_b_id);
+      if (!a || !b) { errors.push({ index: i, error: 'Both ports required' }); return; }
+      if (a === b) { errors.push({ index: i, error: 'Ports must differ' }); return; }
+      if (!portExists.get(a) || !portExists.get(b)) { errors.push({ index: i, error: 'Port not found' }); return; }
+
+      const st = status || 'active';
+      if (st === 'active') {
+        if (usedInBatch.has(a) || usedInBatch.has(b)) { errors.push({ index: i, error: 'Port used twice in this batch' }); return; }
+        if (activeConflict.get(a, a, b, b)) { errors.push({ index: i, error: 'Port already has an active connection' }); return; }
+      }
+
+      const r = insert.run(a, b, cable_type || 'cat6', cable_color || null, cable_length_ft || null, vlan_id || null, st, notes || null);
+      if (st === 'active') { usedInBatch.add(a); usedInBatch.add(b); }
+      created.push(db.prepare(CONNECTION_SELECT + ' WHERE c.id = ?').get(r.lastInsertRowid));
+    });
+  });
+  tx();
+
+  if (created.length > 0) {
+    const first = created[0], last = created[created.length - 1];
+    logHistory(db, {
+      entity_type: 'connection', entity_id: null, action: 'created',
+      summary: `Bulk-patched ${created.length} connection${created.length !== 1 ? 's' : ''} (${first.device_a_name} ↔ ${first.device_b_name}${created.length > 1 ? `, …${last.device_a_name} ↔ ${last.device_b_name}` : ''})`,
+      device_a_id: first.device_a_id, device_b_id: first.device_b_id,
+      meta: { count: created.length, ids: created.map(c => c.id) },
+    });
+  }
+  res.status(created.length ? 201 : 422).json({ created: created.length, errors, connections: created });
+});
+
 router.get('/:id', (req, res) => {
   const db = getDb();
   const conn = db.prepare(CONNECTION_SELECT + ' WHERE c.id = ?').get(req.params.id);

@@ -63,6 +63,9 @@ export default function DeviceDetail() {
         location_id: form.location_id || null,
         rack_unit_start: form.rack_unit_start ? parseInt(form.rack_unit_start) : null,
         rack_unit_height: form.rack_unit_height ? parseInt(form.rack_unit_height) : null,
+        capacity_watts: form.capacity_watts ? parseInt(form.capacity_watts) : null,
+        capacity_va: form.capacity_va ? parseInt(form.capacity_va) : null,
+        breaker_amps: form.breaker_amps ? parseInt(form.breaker_amps) : null,
       })
       setEditMode(false)
       load()
@@ -320,6 +323,26 @@ export default function DeviceDetail() {
                 <input type="number" value={form.rack_unit_height || ''} onChange={e => setForm(f => ({ ...f, rack_unit_height: e.target.value }))}
                   className="w-full bg-[#1e1e1e] border border-[#374151] rounded px-3 py-2 text-sm text-white focus:outline-none focus:border-[#06B6D4]"/>
               </div>
+              {(form.device_type === 'ups' || form.device_type === 'pdu') && (
+                <div className="col-span-2 grid grid-cols-3 gap-3 bg-[#0d0d0d] border border-[#1f2937] rounded-lg p-3">
+                  <div className="col-span-3 text-[11px] text-gray-500 uppercase tracking-wide">Power Capacity</div>
+                  <div>
+                    <label className="block text-xs text-gray-400 mb-1.5">Capacity (W)</label>
+                    <input type="number" value={form.capacity_watts || ''} onChange={e => setForm(f => ({ ...f, capacity_watts: e.target.value }))}
+                      className="w-full bg-[#1e1e1e] border border-[#374151] rounded px-3 py-2 text-sm text-white focus:outline-none focus:border-[#06B6D4]"/>
+                  </div>
+                  <div>
+                    <label className="block text-xs text-gray-400 mb-1.5">Rating (VA)</label>
+                    <input type="number" value={form.capacity_va || ''} onChange={e => setForm(f => ({ ...f, capacity_va: e.target.value }))}
+                      className="w-full bg-[#1e1e1e] border border-[#374151] rounded px-3 py-2 text-sm text-white focus:outline-none focus:border-[#06B6D4]"/>
+                  </div>
+                  <div>
+                    <label className="block text-xs text-gray-400 mb-1.5">Breaker (A)</label>
+                    <input type="number" value={form.breaker_amps || ''} onChange={e => setForm(f => ({ ...f, breaker_amps: e.target.value }))}
+                      className="w-full bg-[#1e1e1e] border border-[#374151] rounded px-3 py-2 text-sm text-white focus:outline-none focus:border-[#06B6D4]"/>
+                  </div>
+                </div>
+              )}
               <div className="col-span-2">
                 <label className="block text-xs text-gray-400 mb-1.5">Notes</label>
                 <textarea value={form.notes || ''} onChange={e => setForm(f => ({ ...f, notes: e.target.value }))} rows="2"
