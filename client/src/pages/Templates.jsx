@@ -12,7 +12,7 @@ const SPEEDS = ['100m','1g','2_5g','5g','10g','25g','40g','100g','unknown']
 
 const VENDOR_ORDER = [
   'Ubiquiti','TP-Link Omada','MikroTik','Netgear','Aruba Instant On','Cisco',
-  'Fortinet','Palo Alto Networks','Cisco Meraki','Netgate','OPNsense','Sophos','SonicWall','Protectli',
+  'Fortinet','Palo Alto Networks','Cisco Meraki','Netgate','OPNsense','Sophos','SonicWall','Firewalla','Protectli',
   'Synology','QNAP','TrueNAS','Asustor','UGREEN','Drobo','Custom',
   'HP','APC','CyberPower','Eaton','Tripp Lite','Vertiv','Generic',
 ]

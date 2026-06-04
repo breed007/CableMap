@@ -208,7 +208,7 @@ export default function Devices() {
                   // Curated order: networking → security → NAS → servers → UPS → generic.
                   const order = [
                     'Ubiquiti', 'TP-Link Omada', 'MikroTik', 'Netgear', 'Aruba Instant On', 'Cisco',
-                    'Fortinet', 'Palo Alto Networks', 'Cisco Meraki', 'Netgate', 'OPNsense', 'Sophos', 'SonicWall', 'Protectli',
+                    'Fortinet', 'Palo Alto Networks', 'Cisco Meraki', 'Netgate', 'OPNsense', 'Sophos', 'SonicWall', 'Firewalla', 'Protectli',
                     'Synology', 'QNAP', 'TrueNAS', 'Asustor', 'UGREEN', 'Drobo', 'Custom',
                     'HP', 'APC', 'CyberPower', 'Eaton', 'Tripp Lite', 'Vertiv', 'Generic',
                   ]

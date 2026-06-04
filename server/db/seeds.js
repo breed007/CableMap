@@ -1412,6 +1412,43 @@ const seedTemplates = [
     default_ports: JSON.stringify(Array.from({ length: 6 }, (_, i) => ({ label: i === 0 ? 'WAN' : `LAN${i}`, port_number: i + 1, port_type: 'rj45', speed: '1g', is_uplink: i === 0 ? 1 : 0 }))),
   },
 
+  // ── Firewalla ───────────────────────────────────────────────────────────────
+  // Desktop security/router appliances. Ports are software-configurable WAN/LAN;
+  // port 1 is labeled WAN as the typical default.
+  {
+    make: 'Firewalla', model: 'Gold', sku: 'FW-GOLD', device_type: 'firewall', rack_unit_height: null, form_factor: 'desktop',
+    default_ports: JSON.stringify(Array.from({ length: 4 }, (_, i) => ({ label: i === 0 ? 'WAN' : `LAN${i}`, port_number: i + 1, port_type: 'rj45', speed: '1g', is_uplink: i === 0 ? 1 : 0 }))),
+  },
+  {
+    make: 'Firewalla', model: 'Gold SE', sku: 'FW-GOLD-SE', device_type: 'firewall', rack_unit_height: null, form_factor: 'desktop',
+    default_ports: JSON.stringify(Array.from({ length: 4 }, (_, i) => ({ label: i === 0 ? 'WAN' : `LAN${i}`, port_number: i + 1, port_type: 'rj45', speed: '2_5g', is_uplink: i === 0 ? 1 : 0 }))),
+  },
+  {
+    make: 'Firewalla', model: 'Gold Plus', sku: 'FW-GOLD-PLUS', device_type: 'firewall', rack_unit_height: null, form_factor: 'desktop',
+    default_ports: JSON.stringify(Array.from({ length: 4 }, (_, i) => ({ label: i === 0 ? 'WAN' : `LAN${i}`, port_number: i + 1, port_type: 'rj45', speed: '2_5g', is_uplink: i === 0 ? 1 : 0 }))),
+  },
+  {
+    make: 'Firewalla', model: 'Gold Pro', sku: 'FW-GOLD-PRO', device_type: 'firewall', rack_unit_height: null, form_factor: 'desktop',
+    default_ports: JSON.stringify([
+      { label: 'WAN (10G)', port_number: 1, port_type: 'rj45', speed: '10g', is_uplink: 1 },
+      { label: 'Port 2 (10G)', port_number: 2, port_type: 'rj45', speed: '10g', is_uplink: 0 },
+      { label: 'Port 3 (2.5G)', port_number: 3, port_type: 'rj45', speed: '2_5g', is_uplink: 0 },
+      { label: 'Port 4 (2.5G)', port_number: 4, port_type: 'rj45', speed: '2_5g', is_uplink: 0 },
+    ]),
+  },
+  {
+    make: 'Firewalla', model: 'Purple', sku: 'FW-PURPLE', device_type: 'firewall', rack_unit_height: null, form_factor: 'desktop',
+    default_ports: JSON.stringify(Array.from({ length: 2 }, (_, i) => ({ label: i === 0 ? 'WAN' : 'LAN', port_number: i + 1, port_type: 'rj45', speed: '2_5g', is_uplink: i === 0 ? 1 : 0 }))),
+  },
+  {
+    make: 'Firewalla', model: 'Purple SE', sku: 'FW-PURPLE-SE', device_type: 'firewall', rack_unit_height: null, form_factor: 'desktop',
+    default_ports: JSON.stringify(Array.from({ length: 2 }, (_, i) => ({ label: i === 0 ? 'WAN' : 'LAN', port_number: i + 1, port_type: 'rj45', speed: '1g', is_uplink: i === 0 ? 1 : 0 }))),
+  },
+  {
+    make: 'Firewalla', model: 'Blue Plus', sku: 'FW-BLUE-PLUS', device_type: 'firewall', rack_unit_height: null, form_factor: 'desktop',
+    default_ports: JSON.stringify([{ label: 'ETH', port_number: 1, port_type: 'rj45', speed: '1g', is_uplink: 1 }]),
+  },
+
   // ── TP-Link Omada ─────────────────────────────────────────────────────────────
   {
     make: 'TP-Link Omada', model: 'ER605 Gateway', sku: 'ER605', device_type: 'router', rack_unit_height: null,

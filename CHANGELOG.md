@@ -11,6 +11,7 @@ All notable changes to CableMap are documented here. The format is based on
 - **Bulk patching** — a new tool to patch a range of ports between two devices in one shot (e.g. switch ports 1–24 → patch-panel ports 1–24). Pick a port range on each side, choose cable type/VLAN/status once, see a row-by-row preview, and create them all — with per-row conflict validation (including conflicts within the same batch) and an option to skip ports already in use.
 - **Power capacity & load budgeting** — give a UPS/PDU a rated capacity (watts / VA / breaker amps) and see a live load bar: connected draw vs. capacity, % load, and an overload warning. Built-in UPS/PDU templates ship with their rated capacity, so picking a model pre-fills it.
 - **Health check** — a new page that audits your documentation for consistency and completeness: ports in multiple active connections, devices overlapping in the same rack U, power sources over capacity, powered devices not mapped to a UPS/PDU, active devices with no ports, and planned connections never activated.
+- **Firewalla device templates** — Gold, Gold SE, Gold Plus, Gold Pro, Purple, Purple SE, and Blue Plus (351 templates total).
 
 ### Changed
 
