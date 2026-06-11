@@ -34,6 +34,15 @@ CREATE TABLE IF NOT EXISTS devices (
   capacity_watts INTEGER,
   capacity_va INTEGER,
   breaker_amps INTEGER,
+  -- Reachability monitoring (light status checks, opt-in per device).
+  -- monitor_method: ping | http | https | tcp
+  monitor_enabled INTEGER DEFAULT 0,
+  monitor_method TEXT DEFAULT 'ping',
+  monitor_target TEXT,
+  monitor_port INTEGER,
+  last_status TEXT,
+  last_checked_at DATETIME,
+  last_latency_ms INTEGER,
   canvas_x REAL DEFAULT 0,
   canvas_y REAL DEFAULT 0,
   created_at DATETIME DEFAULT CURRENT_TIMESTAMP,

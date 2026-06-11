@@ -17,6 +17,11 @@ FROM node:20-slim
 
 WORKDIR /app
 
+# iputils-ping provides the `ping` binary used by the reachability monitor
+# (the http/tcp check methods need no extra packages).
+RUN apt-get update && apt-get install -y --no-install-recommends iputils-ping \
+    && rm -rf /var/lib/apt/lists/*
+
 # Install server dependencies
 COPY server/package*.json ./server/
 RUN cd server && npm install --omit=dev

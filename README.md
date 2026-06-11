@@ -6,7 +6,7 @@ CableMap is a self-hosted, single-binary-ish web app (Node + SQLite) with a dark
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-06B6D4.svg)](LICENSE)
 ![Node](https://img.shields.io/badge/Node-20%2B-22C55E.svg)
-![Status](https://img.shields.io/badge/release-v0.3.0-3B82F6.svg)
+![Status](https://img.shields.io/badge/release-v0.4.0-3B82F6.svg)
 
 ---
 
@@ -41,7 +41,8 @@ Home labs grow organically. You add a switch, a NAS, an AP, a UPS — and six mo
 - **Patch panel support** — front/back port pairs are modeled as linked ports, so a cable trace follows through the panel automatically.
 - **Port trace algorithm** — `GET /api/ports/:id/trace` walks the physical path hop-by-hop (including patch-panel pass-through and cycle detection).
 - **Rack elevation view** — a real front-of-rack "U" diagram driven by each device's rack position. Click a slot to jump to the device; passive occupants (UPS, shelves, blank panels) take up space too.
-- **Canvas view** — a [React Flow](https://reactflow.com/) topology map with device nodes, color-coded cable edges, draggable layout, and VLAN/location filtering.
+- **Canvas view** — a [React Flow](https://reactflow.com/) topology map with device nodes, color-coded cable edges, draggable layout, VLAN/location filtering, live-status overlay, themes, uplink-aware auto-layout, and PNG/SVG export.
+- **Reachability monitoring** — opt in per device (ping / HTTP / HTTPS / TCP) and CableMap shows live online/offline status in the list, on device detail, on the canvas, and on the dashboard. A documentation aid — not a metrics/alerting system. Configurable sweep interval; set `MONITOR_INTERVAL_SECONDS=0` to disable.
 - **Power mapping & load budgeting** — model UPS/PDU outlets and which device each one feeds (with receptacle types and estimated draw), give a power source its rated capacity, and watch a live load bar with overload warnings. Device detail shows an outlet map for power sources and a "powered by" panel for everything else.
 - **Health check** — audits your documentation for inconsistencies: double-booked ports, rack-U overlaps, overloaded power sources, unmapped power, devices with no ports, and stale planned connections.
 - **Change history** — an append-only timeline of every device, connection, and power change, with a global History page and a per-device view.
@@ -141,6 +142,7 @@ All configuration is via environment variables (see `.env.example`):
 | `ADMIN_PASSWORD` | `changeme` | Login password (plaintext, or a `bcrypt` hash) — **change this** |
 | `DATA_DIR` | `./data` | Directory for the DB, sessions, and uploads |
 | `DB_PATH` | `./data/cablemap.db` | SQLite database path |
+| `MONITOR_INTERVAL_SECONDS` | `60` | Reachability sweep interval; `0` disables the background checker |
 
 To use a hashed admin password instead of plaintext:
 
@@ -194,6 +196,7 @@ GET|POST|PUT|DELETE /api/power/outlets      POST /api/power/outlets/bulk-create
 GET|POST|PUT|DELETE /api/power/connections  (outlet → device power mapping)
 GET             /api/history                GET /api/history/device/:id
 GET             /api/health                 (consistency / completeness checks)
+POST            /api/devices/:id/check      POST /api/monitor/check-all  (reachability)
 GET             /api/backup/export          POST /api/backup/import
 GET             /api/search?q=              GET /api/summary
 POST            /api/import/connections     GET /api/export/connections

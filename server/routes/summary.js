@@ -13,6 +13,9 @@ router.get('/', (req, res) => {
   const total_racks = db.prepare('SELECT COUNT(*) as c FROM locations WHERE is_rack = 1').get().c;
   const powered_devices = db.prepare('SELECT COUNT(DISTINCT device_id) as c FROM power_connections').get().c;
   const total_watts = db.prepare('SELECT COALESCE(SUM(watts),0) as w FROM power_connections').get().w;
+  const monitored_devices = db.prepare('SELECT COUNT(*) as c FROM devices WHERE monitor_enabled = 1').get().c;
+  const devices_online = db.prepare("SELECT COUNT(*) as c FROM devices WHERE monitor_enabled = 1 AND last_status = 'online'").get().c;
+  const devices_offline = db.prepare("SELECT COUNT(*) as c FROM devices WHERE monitor_enabled = 1 AND last_status = 'offline'").get().c;
 
   const connected_port_ids = db.prepare(`
     SELECT port_a_id as id FROM connections UNION SELECT port_b_id FROM connections
@@ -47,6 +50,9 @@ router.get('/', (req, res) => {
     total_racks,
     powered_devices,
     total_watts,
+    monitored_devices,
+    devices_online,
+    devices_offline,
     unconnected_port_count,
     recent_connections,
     alerts: {

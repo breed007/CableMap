@@ -87,6 +87,19 @@ export const OUTLET_TYPES = [
 ]
 export const OUTLET_TYPE_LABELS = Object.fromEntries(OUTLET_TYPES.map(o => [o.value, o.label]))
 
+export const MONITOR_METHODS = [
+  { value: 'ping', label: 'Ping (ICMP)' },
+  { value: 'http', label: 'HTTP' },
+  { value: 'https', label: 'HTTPS' },
+  { value: 'tcp', label: 'TCP port' },
+]
+
+export const STATUS_DISPLAY = {
+  online: { color: '#22C55E', label: 'Online' },
+  offline: { color: '#EF4444', label: 'Offline' },
+  unknown: { color: '#6B7280', label: 'Unknown' },
+}
+
 export const HISTORY_ACTION_COLORS = {
   created: '#22C55E',
   updated: '#06B6D4',

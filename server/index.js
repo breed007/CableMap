@@ -47,6 +47,7 @@ app.use('/api/attachments', require('./routes/attachments'));
 app.use('/api/power', require('./routes/power'));
 app.use('/api/history', require('./routes/history'));
 app.use('/api/health', require('./routes/health'));
+app.use('/api/monitor', require('./routes/monitor'));
 app.use('/api/backup', require('./routes/backup'));
 app.use('/api/export', require('./routes/importExport'));
 app.use('/api/import', require('./routes/importExport'));
@@ -65,3 +66,22 @@ if (fs.existsSync(publicDir)) {
 app.listen(PORT, () => {
   console.log(`CableMap running on http://localhost:${PORT}`);
 });
+
+// ── Background reachability scheduler ────────────────────────────────────────
+// Periodically checks all monitor-enabled devices. Set MONITOR_INTERVAL_SECONDS=0
+// to disable. Runs are serialized so a slow sweep never overlaps the next tick.
+const MONITOR_INTERVAL = parseInt(process.env.MONITOR_INTERVAL_SECONDS || '60', 10);
+if (MONITOR_INTERVAL > 0) {
+  const { getDb } = require('./db/connection');
+  const { checkAllEnabled } = require('./utils/monitor');
+  let running = false;
+  const tick = async () => {
+    if (running) return;
+    running = true;
+    try { await checkAllEnabled(getDb()); }
+    catch (e) { console.error('monitor sweep failed:', e.message); }
+    finally { running = false; }
+  };
+  setInterval(tick, MONITOR_INTERVAL * 1000).unref();
+  console.log(`Reachability monitor: every ${MONITOR_INTERVAL}s`);
+}

@@ -4,6 +4,17 @@ All notable changes to CableMap are documented here. The format is based on
 [Keep a Changelog](https://keepachangelog.com/), and this project adheres to
 [Semantic Versioning](https://semver.org/).
 
+## [0.4.0] — 2026-06-04
+
+### Added
+
+- **Reachability monitoring** — opt-in, lightweight live status for any device with a management IP. Choose a method (ICMP ping, HTTP, HTTPS, or TCP-port), and CableMap shows **online / offline / unknown** dots in the device list, on device detail (with latency and a "Check now" button), and as an "online / total" stat on the dashboard. A background sweep runs on a configurable interval (`MONITOR_INTERVAL_SECONDS`, default 60; set 0 to disable), and status transitions are logged to history. This is a documentation aid, not a full monitoring system — no metrics or alerting.
+- **Canvas upgrades** — device nodes now reflect live status (colored border + dot), plus three canvas **themes** (Dark, Midnight, Blueprint), an uplink-aware **auto-layout** that arranges the topology left-to-right from your routers/firewalls, and **PNG export** (in addition to SVG).
+
+### Changed
+
+- Add/Edit Device forms include a monitoring section (enable, method, target override, port).
+
 ## [0.3.0] — 2026-06-04
 
 ### Added
@@ -47,6 +58,7 @@ Initial public release.
 - **VLAN manager, full-text search, CSV import/export, PDF port-map export.**
 - **Deployment:** Docker (compose + named volume) and Linux (PM2 + Nginx/Apache) guides.
 
+[0.4.0]: https://github.com/breed007/CableMap/releases/tag/v0.4.0
 [0.3.0]: https://github.com/breed007/CableMap/releases/tag/v0.3.0
 [0.2.0]: https://github.com/breed007/CableMap/releases/tag/v0.2.0
 [0.1.0]: https://github.com/breed007/CableMap/releases/tag/v0.1.0

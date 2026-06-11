@@ -122,9 +122,13 @@ if (devicesSql && devicesSql.sql.includes("CHECK(device_type IN")) {
   console.log('Migrated: devices table rebuilt without device_type CHECK.');
 }
 
-// devices: OS/firmware + form factor + power capacity (after any table rebuild
-// above, so the rebuild's SELECT * column counts stay aligned)
-for (const col of [['os', 'TEXT'], ['form_factor', 'TEXT'], ['capacity_watts', 'INTEGER'], ['capacity_va', 'INTEGER'], ['breaker_amps', 'INTEGER']]) {
+// devices: OS/firmware + form factor + power capacity + monitoring (after any
+// table rebuild above, so the rebuild's SELECT * column counts stay aligned)
+for (const col of [
+  ['os', 'TEXT'], ['form_factor', 'TEXT'], ['capacity_watts', 'INTEGER'], ['capacity_va', 'INTEGER'], ['breaker_amps', 'INTEGER'],
+  ['monitor_enabled', 'INTEGER DEFAULT 0'], ['monitor_method', "TEXT DEFAULT 'ping'"], ['monitor_target', 'TEXT'], ['monitor_port', 'INTEGER'],
+  ['last_status', 'TEXT'], ['last_checked_at', 'DATETIME'], ['last_latency_ms', 'INTEGER'],
+]) {
   if (tableExists('devices') && !columnExists('devices', col[0])) {
     db.exec(`ALTER TABLE devices ADD COLUMN ${col[0]} ${col[1]}`);
     console.log(`Migrated: devices.${col[0]}`);

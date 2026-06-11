@@ -7,7 +7,7 @@ import PhotoUploader from '../components/PhotoUploader'
 import DocumentUploader from '../components/DocumentUploader'
 import PowerSection from '../components/PowerSection'
 import DeviceHistory from '../components/DeviceHistory'
-import { DEVICE_TYPE_LABELS, PORT_TYPE_LABELS, SPEED_LABELS, CABLE_COLORS, STATUS_COLORS, PASSIVE_DEVICE_TYPES, FORM_FACTORS, FORM_FACTOR_LABELS } from '../utils/cableColors'
+import { DEVICE_TYPE_LABELS, PORT_TYPE_LABELS, SPEED_LABELS, CABLE_COLORS, STATUS_COLORS, PASSIVE_DEVICE_TYPES, FORM_FACTORS, FORM_FACTOR_LABELS, MONITOR_METHODS, STATUS_DISPLAY } from '../utils/cableColors'
 
 const DEVICE_TYPES = ['switch','patch_panel','wall_plate','router','nas','access_point','server','firewall','modem','media_converter','ups','pdu','shelf','blank','other']
 const PORT_TYPES = ['rj45','sfp','sfp_plus','qsfp','lc_fiber','sc_fiber','usb_a','usb_c','other']
@@ -30,6 +30,13 @@ export default function DeviceDetail() {
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
   const [reloadKey, setReloadKey] = useState(0)
+  const [checking, setChecking] = useState(false)
+
+  const checkNow = async () => {
+    setChecking(true)
+    try { await api.post(`/devices/${id}/check`); load() }
+    finally { setChecking(false) }
+  }
 
   const load = () => {
     api.get(`/devices/${id}`).then(r => { setDevice(r.data); setForm(r.data); setReloadKey(k => k + 1) })
@@ -131,10 +138,20 @@ export default function DeviceDetail() {
                 <a href={`http://${device.management_ip}`} target="_blank" rel="noopener noreferrer"
                   className="font-mono text-xs text-[#06B6D4] hover:underline">{device.management_ip}</a>
               )}
+              {device.monitor_enabled ? (
+                <span className="flex items-center gap-1.5 text-xs">
+                  <span className="w-2 h-2 rounded-full" style={{ backgroundColor: (STATUS_DISPLAY[device.last_status] || STATUS_DISPLAY.unknown).color }}/>
+                  <span style={{ color: (STATUS_DISPLAY[device.last_status] || STATUS_DISPLAY.unknown).color }}>{(STATUS_DISPLAY[device.last_status] || STATUS_DISPLAY.unknown).label}</span>
+                  {device.last_latency_ms != null && device.last_status === 'online' && <span className="text-gray-600">{device.last_latency_ms}ms</span>}
+                </span>
+              ) : null}
             </div>
           </div>
         </div>
         <div className="flex gap-2">
+          {device.monitor_enabled && (
+            <button onClick={checkNow} disabled={checking} className="text-sm px-3 py-1.5 bg-[#1e1e1e] hover:bg-[#374151] text-gray-300 rounded-lg transition-colors disabled:opacity-50">{checking ? 'Checking…' : 'Check now'}</button>
+          )}
           <button onClick={() => setEditMode(true)} className="text-sm px-3 py-1.5 bg-[#1e1e1e] hover:bg-[#374151] text-gray-300 rounded-lg transition-colors">Edit</button>
           <button onClick={() => setShowDelete(true)} className="text-sm px-3 py-1.5 bg-[#EF4444]/10 hover:bg-[#EF4444]/20 text-red-400 rounded-lg transition-colors">Delete</button>
         </div>
@@ -343,6 +360,38 @@ export default function DeviceDetail() {
                   </div>
                 </div>
               )}
+
+              {/* Reachability monitoring */}
+              <div className="col-span-2 bg-[#0d0d0d] border border-[#1f2937] rounded-lg p-3">
+                <label className="flex items-center gap-2 text-xs text-gray-300">
+                  <input type="checkbox" checked={!!form.monitor_enabled} onChange={e => setForm(f => ({ ...f, monitor_enabled: e.target.checked }))} className="rounded"/>
+                  Monitor reachability {form.management_ip ? <span className="text-gray-600">({form.monitor_target || form.management_ip})</span> : <span className="text-amber-500">— set a management IP first</span>}
+                </label>
+                {form.monitor_enabled ? (
+                  <div className="grid grid-cols-3 gap-3 mt-3">
+                    <div>
+                      <label className="block text-[11px] text-gray-500 mb-1">Method</label>
+                      <select value={form.monitor_method || 'ping'} onChange={e => setForm(f => ({ ...f, monitor_method: e.target.value }))}
+                        className="w-full bg-[#1e1e1e] border border-[#374151] rounded px-2 py-1.5 text-sm text-gray-300">
+                        {MONITOR_METHODS.map(m => <option key={m.value} value={m.value}>{m.label}</option>)}
+                      </select>
+                    </div>
+                    <div>
+                      <label className="block text-[11px] text-gray-500 mb-1">Target (optional)</label>
+                      <input value={form.monitor_target || ''} onChange={e => setForm(f => ({ ...f, monitor_target: e.target.value }))}
+                        className="w-full bg-[#1e1e1e] border border-[#374151] rounded px-2 py-1.5 text-sm text-white font-mono" placeholder="defaults to mgmt IP"/>
+                    </div>
+                    {(form.monitor_method === 'tcp' || form.monitor_method === 'http' || form.monitor_method === 'https') && (
+                      <div>
+                        <label className="block text-[11px] text-gray-500 mb-1">Port</label>
+                        <input type="number" value={form.monitor_port || ''} onChange={e => setForm(f => ({ ...f, monitor_port: e.target.value }))}
+                          className="w-full bg-[#1e1e1e] border border-[#374151] rounded px-2 py-1.5 text-sm text-white"/>
+                      </div>
+                    )}
+                  </div>
+                ) : null}
+              </div>
+
               <div className="col-span-2">
                 <label className="block text-xs text-gray-400 mb-1.5">Notes</label>
                 <textarea value={form.notes || ''} onChange={e => setForm(f => ({ ...f, notes: e.target.value }))} rows="2"

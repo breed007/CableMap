@@ -4,6 +4,9 @@ const path = require('path');
 const fs = require('fs');
 const { getDb } = require('../db/connection');
 const { logHistory } = require('../utils/history');
+const { runDeviceCheck } = require('../utils/monitor');
+
+const MONITOR_METHODS = ['ping', 'http', 'https', 'tcp'];
 
 const DATA_DIR = process.env.DATA_DIR || path.resolve(__dirname, '../../data');
 const UPLOAD_DIR = path.resolve(DATA_DIR, 'uploads');
@@ -34,14 +37,15 @@ router.get('/', (req, res) => {
 
 router.post('/', (req, res) => {
   const db = getDb();
-  const { name, device_type, make, model, os, form_factor, location_id, rack_unit_start, rack_unit_height, management_ip, notes, canvas_x, canvas_y, capacity_watts, capacity_va, breaker_amps } = req.body;
+  const { name, device_type, make, model, os, form_factor, location_id, rack_unit_start, rack_unit_height, management_ip, notes, canvas_x, canvas_y, capacity_watts, capacity_va, breaker_amps, monitor_enabled, monitor_method, monitor_target, monitor_port } = req.body;
   if (!name) return res.status(400).json({ error: 'name is required' });
   // device_type is free-text (custom types allowed); just require a non-empty value.
   if (!device_type || !String(device_type).trim()) return res.status(400).json({ error: 'device_type is required' });
+  const method = MONITOR_METHODS.includes(monitor_method) ? monitor_method : 'ping';
   const result = db.prepare(
-    `INSERT INTO devices (name, device_type, make, model, os, form_factor, location_id, rack_unit_start, rack_unit_height, management_ip, notes, canvas_x, canvas_y, capacity_watts, capacity_va, breaker_amps)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
-  ).run(name, device_type, make || null, model || null, os || null, form_factor || null, location_id || null, rack_unit_start || null, rack_unit_height || null, management_ip || null, notes || null, canvas_x || 0, canvas_y || 0, capacity_watts || null, capacity_va || null, breaker_amps || null);
+    `INSERT INTO devices (name, device_type, make, model, os, form_factor, location_id, rack_unit_start, rack_unit_height, management_ip, notes, canvas_x, canvas_y, capacity_watts, capacity_va, breaker_amps, monitor_enabled, monitor_method, monitor_target, monitor_port)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
+  ).run(name, device_type, make || null, model || null, os || null, form_factor || null, location_id || null, rack_unit_start || null, rack_unit_height || null, management_ip || null, notes || null, canvas_x || 0, canvas_y || 0, capacity_watts || null, capacity_va || null, breaker_amps || null, monitor_enabled ? 1 : 0, method, monitor_target || null, monitor_port || null);
   logHistory(db, { entity_type: 'device', entity_id: result.lastInsertRowid, action: 'created', summary: `Added device ${name} (${device_type})`, device_a_id: result.lastInsertRowid });
   res.status(201).json(getDeviceById(db, result.lastInsertRowid));
 });
@@ -57,15 +61,20 @@ router.put('/:id', (req, res) => {
   const db = getDb();
   const device = db.prepare('SELECT * FROM devices WHERE id = ?').get(req.params.id);
   if (!device) return res.status(404).json({ error: 'Not found' });
-  const { name, device_type, make, model, os, form_factor, location_id, rack_unit_start, rack_unit_height, management_ip, notes, capacity_watts, capacity_va, breaker_amps } = req.body;
+  const { name, device_type, make, model, os, form_factor, location_id, rack_unit_start, rack_unit_height, management_ip, notes, capacity_watts, capacity_va, breaker_amps, monitor_enabled, monitor_method, monitor_target, monitor_port } = req.body;
   if (device_type !== undefined && !String(device_type).trim()) return res.status(400).json({ error: 'device_type cannot be empty' });
   db.prepare(
-    `UPDATE devices SET name=?, device_type=?, make=?, model=?, os=?, form_factor=?, location_id=?, rack_unit_start=?, rack_unit_height=?, management_ip=?, notes=?, capacity_watts=?, capacity_va=?, breaker_amps=?, updated_at=CURRENT_TIMESTAMP
+    `UPDATE devices SET name=?, device_type=?, make=?, model=?, os=?, form_factor=?, location_id=?, rack_unit_start=?, rack_unit_height=?, management_ip=?, notes=?, capacity_watts=?, capacity_va=?, breaker_amps=?,
+       monitor_enabled=?, monitor_method=?, monitor_target=?, monitor_port=?, updated_at=CURRENT_TIMESTAMP
      WHERE id=?`
   ).run(name, device_type, make || null, model || null, os || null, form_factor || null, location_id || null, rack_unit_start || null, rack_unit_height || null, management_ip || null, notes || null,
     capacity_watts !== undefined ? (capacity_watts || null) : device.capacity_watts,
     capacity_va !== undefined ? (capacity_va || null) : device.capacity_va,
     breaker_amps !== undefined ? (breaker_amps || null) : device.breaker_amps,
+    monitor_enabled !== undefined ? (monitor_enabled ? 1 : 0) : device.monitor_enabled,
+    monitor_method !== undefined ? (MONITOR_METHODS.includes(monitor_method) ? monitor_method : device.monitor_method) : device.monitor_method,
+    monitor_target !== undefined ? (monitor_target || null) : device.monitor_target,
+    monitor_port !== undefined ? (monitor_port || null) : device.monitor_port,
     req.params.id);
   // Record notable field changes
   const changes = [];
@@ -84,6 +93,15 @@ router.put('/:id/position', (req, res) => {
   db.prepare('UPDATE devices SET canvas_x=?, canvas_y=?, updated_at=CURRENT_TIMESTAMP WHERE id=?')
     .run(canvas_x, canvas_y, req.params.id);
   res.json({ ok: true });
+});
+
+// Reachability check now (manual; works even if monitoring isn't enabled).
+router.post('/:id/check', async (req, res) => {
+  const db = getDb();
+  const device = db.prepare('SELECT * FROM devices WHERE id = ?').get(req.params.id);
+  if (!device) return res.status(404).json({ error: 'Not found' });
+  const result = await runDeviceCheck(db, device);
+  res.json({ ...result, checked_at: new Date().toISOString() });
 });
 
 router.delete('/:id', (req, res) => {

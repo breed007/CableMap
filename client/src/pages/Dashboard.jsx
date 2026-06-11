@@ -35,7 +35,7 @@ export default function Dashboard() {
     <div className="p-8 text-gray-500 text-sm">Loading dashboard...</div>
   )
 
-  const { total_devices, total_ports, total_connections, unconnected_port_count, recent_connections, alerts, total_racks = 0, total_photos = 0 } = summary
+  const { total_devices, total_ports, total_connections, unconnected_port_count, recent_connections, alerts, total_racks = 0, total_photos = 0, monitored_devices = 0, devices_online = 0, devices_offline = 0 } = summary
 
   return (
     <div className="p-6 max-w-5xl">
@@ -89,7 +89,11 @@ export default function Dashboard() {
         <StatCard label="Total Ports" value={total_ports} color="#8B5CF6"/>
         <StatCard label="Unconnected" value={unconnected_port_count} color={unconnected_port_count > 0 ? '#6B7280' : '#22C55E'}/>
         <StatCard label="Racks" value={total_racks} color="#3B82F6"/>
-        <StatCard label="Photos" value={total_photos} color="#EC4899"/>
+        {monitored_devices > 0 ? (
+          <StatCard label="Online" value={`${devices_online}/${monitored_devices}`} sub={devices_offline > 0 ? `${devices_offline} offline` : 'all up'} color={devices_offline > 0 ? '#EF4444' : '#22C55E'}/>
+        ) : (
+          <StatCard label="Photos" value={total_photos} color="#EC4899"/>
+        )}
       </div>
 
       {/* Alerts */}
