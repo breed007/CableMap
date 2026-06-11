@@ -43,6 +43,9 @@ Home labs grow organically. You add a switch, a NAS, an AP, a UPS — and six mo
 - **Rack elevation view** — a real front-of-rack "U" diagram driven by each device's rack position. Click a slot to jump to the device; passive occupants (UPS, shelves, blank panels) take up space too.
 - **Canvas view** — a [React Flow](https://reactflow.com/) topology map with device nodes, color-coded cable edges, draggable layout, VLAN/location filtering, live-status overlay, themes, uplink-aware auto-layout, and PNG/SVG export.
 - **Reachability monitoring** — opt in per device (ping / HTTP / HTTPS / TCP) and CableMap shows live online/offline status in the list, on device detail, on the canvas, and on the dashboard. A documentation aid — not a metrics/alerting system. Configurable sweep interval; set `MONITOR_INTERVAL_SECONDS=0` to disable.
+- **Network discovery** — sweep a subnet (`/24`–`/30`) to find live hosts (IP, MAC + vendor, hostname) and approve them into your inventory from a pending queue. Pings only; no port scanning.
+- **Read-only share links** — revocable, no-login "live view" links for a wall display or a colleague (structure + status + connections; no photos, no editing).
+- **Interop** — JSON topology export (and a tokenized public feed) for other tools, plus an optional MCP server so an AI assistant can query the physical record.
 - **Power mapping & load budgeting** — model UPS/PDU outlets and which device each one feeds (with receptacle types and estimated draw), give a power source its rated capacity, and watch a live load bar with overload warnings. Device detail shows an outlet map for power sources and a "powered by" panel for everything else.
 - **Health check** — audits your documentation for inconsistencies: double-booked ports, rack-U overlaps, overloaded power sources, unmapped power, devices with no ports, and stale planned connections.
 - **Change history** — an append-only timeline of every device, connection, and power change, with a global History page and a per-device view.
@@ -197,11 +200,29 @@ GET|POST|PUT|DELETE /api/power/connections  (outlet → device power mapping)
 GET             /api/history                GET /api/history/device/:id
 GET             /api/health                 (consistency / completeness checks)
 POST            /api/devices/:id/check      POST /api/monitor/check-all  (reachability)
+POST            /api/discovery/scan         GET /api/discovery   POST /api/discovery/:id/import
+GET|POST|DELETE /api/share                  (read-only share links)
+GET             /api/public/:token/snapshot GET /api/public/:token/topology.json  (no auth)
+GET             /api/export/topology.json   (interop)
 GET             /api/backup/export          POST /api/backup/import
 GET             /api/search?q=              GET /api/summary
 POST            /api/import/connections     GET /api/export/connections
 GET             /api/export/device/:id/pdf
 ```
+
+---
+
+## AI / MCP server (optional)
+
+CableMap ships an experimental [MCP](https://modelcontextprotocol.io) server that exposes the physical record as read-only tools (`list_devices`, `get_device`, `list_connections`, `search`, `topology`) so an AI assistant can answer questions like "what's plugged into the core switch?".
+
+```bash
+cd server
+npm install @modelcontextprotocol/sdk   # optional dependency
+DB_PATH=../data/cablemap.db npm run mcp  # stdio MCP server
+```
+
+It reads the SQLite database directly (via Node's built-in driver) and doesn't require the web server to be running.
 
 ---
 

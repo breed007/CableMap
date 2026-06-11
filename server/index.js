@@ -33,7 +33,10 @@ app.use(session({
 // Auth routes (no auth required)
 app.use('/api/auth', require('./routes/auth'));
 
-// All API routes require auth
+// Public read-only share API (token-gated, NO login required) — must be before requireAuth
+app.use('/api/public', require('./routes/public'));
+
+// All other API routes require auth
 app.use('/api', requireAuth);
 app.use('/api/locations', require('./routes/locations'));
 app.use('/api/devices', require('./routes/devices'));
@@ -48,6 +51,8 @@ app.use('/api/power', require('./routes/power'));
 app.use('/api/history', require('./routes/history'));
 app.use('/api/health', require('./routes/health'));
 app.use('/api/monitor', require('./routes/monitor'));
+app.use('/api/discovery', require('./routes/discovery'));
+app.use('/api/share', require('./routes/share'));
 app.use('/api/backup', require('./routes/backup'));
 app.use('/api/export', require('./routes/importExport'));
 app.use('/api/import', require('./routes/importExport'));

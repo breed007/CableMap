@@ -17,6 +17,8 @@ import VlanManager from './pages/VlanManager'
 import Search from './pages/Search'
 import Import from './pages/Import'
 import Export from './pages/Export'
+import Discover from './pages/Discover'
+import ShareView from './pages/ShareView'
 import api from './utils/api'
 
 function RequireAuth({ children }) {
@@ -42,10 +44,13 @@ export default function App() {
     <BrowserRouter>
       <Routes>
         <Route path="/login" element={<Login />} />
+        {/* Public read-only share view — no auth, no sidebar */}
+        <Route path="/share/:token" element={<ShareView />} />
         <Route path="/" element={<RequireAuth><Layout /></RequireAuth>}>
           <Route index element={<Dashboard />} />
           <Route path="devices" element={<Devices />} />
           <Route path="devices/:id" element={<DeviceDetail />} />
+          <Route path="devices/discover" element={<Discover />} />
           <Route path="connections" element={<Connections />} />
           <Route path="connections/bulk" element={<BulkPatch />} />
           <Route path="canvas" element={<Canvas />} />

@@ -124,9 +124,15 @@ export default function Devices() {
           <h1 className="text-xl font-semibold text-white">Devices</h1>
           <p className="text-sm text-gray-500 mt-0.5">{devices.length} device{devices.length !== 1 ? 's' : ''}</p>
         </div>
-        <button onClick={() => setShowAdd(true)} className="bg-[#06B6D4] hover:bg-[#0891b2] text-white text-sm font-medium px-4 py-2 rounded-lg transition-colors flex items-center gap-2">
-          <span className="text-lg leading-none">+</span> Add Device
-        </button>
+        <div className="flex gap-2">
+          <Link to="/devices/discover" className="text-sm px-4 py-2 bg-[#1e1e1e] hover:bg-[#374151] text-gray-300 rounded-lg transition-colors flex items-center gap-2">
+            <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><circle cx="6" cy="6" r="4.5" stroke="currentColor" strokeWidth="1.3"/><line x1="9.5" y1="9.5" x2="13" y2="13" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round"/></svg>
+            Discover
+          </Link>
+          <button onClick={() => setShowAdd(true)} className="bg-[#06B6D4] hover:bg-[#0891b2] text-white text-sm font-medium px-4 py-2 rounded-lg transition-colors flex items-center gap-2">
+            <span className="text-lg leading-none">+</span> Add Device
+          </button>
+        </div>
       </div>
 
       {/* Filters */}

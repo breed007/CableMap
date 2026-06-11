@@ -165,6 +165,30 @@ CREATE TABLE IF NOT EXISTS attachments (
   created_at DATETIME DEFAULT CURRENT_TIMESTAMP
 );
 
+-- Discovered hosts from a network scan, awaiting approval into the inventory.
+-- status: pending | imported | ignored
+CREATE TABLE IF NOT EXISTS discovered_devices (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  ip TEXT NOT NULL UNIQUE,
+  mac TEXT,
+  hostname TEXT,
+  vendor TEXT,
+  status TEXT NOT NULL DEFAULT 'pending',
+  matched_device_id INTEGER REFERENCES devices(id) ON DELETE SET NULL,
+  first_seen DATETIME DEFAULT CURRENT_TIMESTAMP,
+  last_seen DATETIME DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Read-only share links (tokenized public "live view"). Revocable.
+CREATE TABLE IF NOT EXISTS share_tokens (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  token TEXT NOT NULL UNIQUE,
+  label TEXT,
+  revoked INTEGER DEFAULT 0,
+  created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+  last_used_at DATETIME
+);
+
 CREATE INDEX IF NOT EXISTS idx_ports_device_id ON ports(device_id);
 CREATE INDEX IF NOT EXISTS idx_connections_port_a ON connections(port_a_id);
 CREATE INDEX IF NOT EXISTS idx_connections_port_b ON connections(port_b_id);

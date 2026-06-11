@@ -2,8 +2,16 @@ const express = require('express');
 const router = express.Router();
 const multer = require('multer');
 const { getDb } = require('../db/connection');
+const { buildTopology } = require('../utils/topology');
 
 const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 10 * 1024 * 1024 } });
+
+// JSON topology export — clean, documented shape for interop with other tools.
+router.get('/topology.json', (req, res) => {
+  res.setHeader('Content-Type', 'application/json');
+  res.setHeader('Content-Disposition', 'attachment; filename="cablemap-topology.json"');
+  res.send(JSON.stringify(buildTopology(getDb()), null, 2));
+});
 
 // CSV Export — all connections
 router.get('/connections', (req, res) => {

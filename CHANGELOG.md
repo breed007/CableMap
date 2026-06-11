@@ -10,10 +10,14 @@ All notable changes to CableMap are documented here. The format is based on
 
 - **Reachability monitoring** — opt-in, lightweight live status for any device with a management IP. Choose a method (ICMP ping, HTTP, HTTPS, or TCP-port), and CableMap shows **online / offline / unknown** dots in the device list, on device detail (with latency and a "Check now" button), and as an "online / total" stat on the dashboard. A background sweep runs on a configurable interval (`MONITOR_INTERVAL_SECONDS`, default 60; set 0 to disable), and status transitions are logged to history. This is a documentation aid, not a full monitoring system — no metrics or alerting.
 - **Canvas upgrades** — device nodes now reflect live status (colored border + dot), plus three canvas **themes** (Dark, Midnight, Blueprint), an uplink-aware **auto-layout** that arranges the topology left-to-right from your routers/firewalls, and **PNG export** (in addition to SVG).
+- **Network discovery** — sweep a subnet (`/24`–`/30`) to find live hosts and bootstrap your inventory. CableMap pings each host, reads MAC from the ARP cache (best-effort vendor lookup) and hostname via reverse DNS, and drops findings into a **pending-devices queue** you approve or ignore. A documentation aid — it pings, it doesn't port-scan.
+- **Read-only share links** — create revocable, no-login "live view" links (device status, structure, and connections) for a wall display or a colleague. Photos and editing are never exposed.
+- **Interop** — a clean **JSON topology export** (also available per share link at `/api/public/<token>/topology.json`) for feeding other home-lab tools, plus an optional **MCP server** (`npm run mcp`) that exposes the physical record as read-only tools for AI assistants.
 
 ### Changed
 
 - Add/Edit Device forms include a monitoring section (enable, method, target override, port).
+- The Export page now manages read-only share links and offers a topology JSON download; the Devices page has a "Discover" action.
 
 ## [0.3.0] — 2026-06-04
 

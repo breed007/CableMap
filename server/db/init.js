@@ -87,6 +87,29 @@ db.exec(`
   CREATE INDEX IF NOT EXISTS idx_history_created ON history(created_at);
 `);
 
+// v0.4.0 (discovery + sharing) tables — for existing databases.
+db.exec(`
+  CREATE TABLE IF NOT EXISTS discovered_devices (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    ip TEXT NOT NULL UNIQUE,
+    mac TEXT,
+    hostname TEXT,
+    vendor TEXT,
+    status TEXT NOT NULL DEFAULT 'pending',
+    matched_device_id INTEGER REFERENCES devices(id) ON DELETE SET NULL,
+    first_seen DATETIME DEFAULT CURRENT_TIMESTAMP,
+    last_seen DATETIME DEFAULT CURRENT_TIMESTAMP
+  );
+  CREATE TABLE IF NOT EXISTS share_tokens (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    token TEXT NOT NULL UNIQUE,
+    label TEXT,
+    revoked INTEGER DEFAULT 0,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    last_used_at DATETIME
+  );
+`);
+
 // device_type was originally a CHECK enum; rebuild the table without it so DIY
 // gear types are allowed. Detect the old constraint and migrate in place.
 const devicesSql = db.prepare(`SELECT sql FROM sqlite_master WHERE type='table' AND name='devices'`).get();
